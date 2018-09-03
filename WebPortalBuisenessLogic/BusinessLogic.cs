@@ -395,17 +395,28 @@ namespace WebPortalBuisenessLogic
 
         public async Task<IEnumerable<UpdateFormDTO>> GetLeadsByStatus(int status)
         {
-            var queryLeads = amocrm.Value.Leads.Get().SetParam(x => x.Status = status).Execute().Result;
-            var leads = queryLeads.Adapt<IEnumerable<Lead>>();
+            IEnumerable<UpdateFormDTO> result = new List<UpdateFormDTO>();
 
-            var ld = leads.Where( cn => cn.Contacts != null || cn.MainContact != null).ToList();
-
-            for (int xx = 0; xx < ld.Count(); xx++)
+            try
             {
-                ld[xx].MainContact = await GetContactById(ld[xx].MainContact.Id);
+                var queryLeads = amocrm.Value.Leads.Get().SetParam(x => x.Status = status).Execute().Result;
+                var leads = queryLeads.Adapt<IEnumerable<Lead>>();
+
+                var ld = leads?.Where(cn => cn.Contacts != null || cn.MainContact != null).ToList();
+
+                for (int xx = 0; xx < ld.Count(); xx++)
+                {
+                    ld[xx].MainContact = await GetContactById(ld[xx].MainContact.Id);
+                }
+
+                result = ld.Adapt<IEnumerable<UpdateFormDTO>>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
 
-            return ld.Adapt<IEnumerable<UpdateFormDTO>>(); 
+            return result;
         }
 
         public async Task<Contact> GetContactById(int id)
