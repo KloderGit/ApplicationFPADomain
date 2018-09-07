@@ -1,38 +1,47 @@
 ﻿using Domain.Interfaces;
 using Domain.Models.Crm.Fields;
+using Domain.Models.Crm.Parent;
+using LibraryAmoCRM.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Domain.Models.Crm
 {
-    public class Contact : IEntityId
+    public class Contact : EntityMember
     {
-        public Int32 Id { get; set; }
-
-        public Int32? ResponsibleUserId { get; set; }
-
-        public Int32? CreatedBy { get; set; }
-
-        public DateTime? CreatedAt { get; set; }
-
-        public DateTime? UpdatedAt { get; set; }
-
-        public Int32? AccountId { get; set; }
-
-        public Int32? GroupId { get; set; }
-
-        public string Name { get; set; }
-
-        public DateTime? ClosestTaskAt { get; set; }
-
         public int? UpdatedBy { get; set; }
-
-        public IEnumerable<Tag> Tags { get; set; }
-
-        public IEnumerable<Field> Fields { get; set; }
 
         public IEnumerable<Lead> Leads { get; set; }
 
         public Company Company { get; set; }
+
+        public IEnumerable<FieldValue> GetField(int id)
+        {
+            return Fields.FirstOrDefault(x => x.Id == id).Values;
+        }
+
+        public void SetField(int id, string value, int? @enum)
+        {
+            try
+            {
+                if (Fields.FirstOrDefault(x => x.Id == id) == null) { return; }
+
+                var currentField = GetField(id);
+
+                var currentValues = currentField.Select(x => x.Value);
+
+                if (!currentValues.Contains(value))
+                {
+                    var tttt = new FieldValue { Value = value, Enum = @enum };
+
+                    this.Fields.FirstOrDefault(x => x.Id == id).Values.Add(tttt);
+
+                }
+            }
+            catch (Exception ex)
+            { }
+        }
+
     }
 }

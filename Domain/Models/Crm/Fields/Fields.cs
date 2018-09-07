@@ -9,7 +9,7 @@ namespace Domain.Models.Crm.Fields
 
         public string Name { get; set; }
 
-        public IEnumerable<FieldValue> Values { get; set; }
+        public List<FieldValue> Values { get; set; }
 
         public bool? IsSystem { get; set; }
     }

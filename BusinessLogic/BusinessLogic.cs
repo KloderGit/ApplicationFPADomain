@@ -32,7 +32,7 @@ namespace WebApiBusinessLogic
 
         CrmEventTypes eventsType = new CrmEventTypes();
 
-        UpdateGuid updGuid;
+        UpdateGuid updGuid; UpdatePhone updPhone;
 
 
         public BusinessLogic(ILogger logger, IConfiguration configuration)
@@ -54,6 +54,7 @@ namespace WebApiBusinessLogic
 
 
             updGuid = new UpdateGuid(amocrm, database, eventsType);
+            updPhone = new UpdatePhone(amocrm, database, eventsType);
 
             new RegisterMapsterConfig();
         }
@@ -98,7 +99,6 @@ namespace WebApiBusinessLogic
 
             return JsonConvert.SerializeObject(list);
         }
-
 
 
         public async Task<IEnumerable<LeadDTO>> GetLeadsByStatus(int status)
