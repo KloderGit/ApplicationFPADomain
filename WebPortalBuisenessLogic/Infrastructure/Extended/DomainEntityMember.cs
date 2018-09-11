@@ -1,4 +1,5 @@
-﻿using Domain.Models.Crm.Fields;
+﻿using Common.Configuration.Crm;
+using Domain.Models.Crm.Fields;
 using Domain.Models.Crm.Parent;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;

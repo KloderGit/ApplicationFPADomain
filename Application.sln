@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibraryAmoCRM", "..\Library
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Library1C", "..\Library1C\Library1C.csproj", "{FD827CD2-EEA7-4141-9D53-9034FDB817E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebPortalBuisenessLogic", "WebPortalBuisenessLogic\WebPortalBuisenessLogic.csproj", "{2871D64A-55E3-4076-B977-CE5139113FD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebPortalBuisenessLogic", "WebPortalBuisenessLogic\WebPortalBuisenessLogic.csproj", "{2871D64A-55E3-4076-B977-CE5139113FD5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{884469C8-4A80-4E48-A6BB-36AA11960376}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,10 @@ Global
 		{2871D64A-55E3-4076-B977-CE5139113FD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2871D64A-55E3-4076-B977-CE5139113FD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2871D64A-55E3-4076-B977-CE5139113FD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{884469C8-4A80-4E48-A6BB-36AA11960376}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{884469C8-4A80-4E48-A6BB-36AA11960376}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{884469C8-4A80-4E48-A6BB-36AA11960376}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{884469C8-4A80-4E48-A6BB-36AA11960376}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -16,7 +16,8 @@ namespace Domain.Models.Crm
 
         public Company Company { get; set; }
 
-        public IEnumerable<FieldValue> GetField(int id)
+
+        public IEnumerable<FieldValue> GetFieldByID(int id)
         {
             return Fields.FirstOrDefault(x => x.Id == id).Values;
         }
@@ -27,7 +28,7 @@ namespace Domain.Models.Crm
             {
                 if (Fields.FirstOrDefault(x => x.Id == id) == null) { return; }
 
-                var currentField = GetField(id);
+                var currentField = GetFieldByID(id);
 
                 var currentValues = currentField.Select(x => x.Value);
 

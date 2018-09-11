@@ -50,6 +50,13 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 contactsWithOutGuid = contactAll.Where(ip => ip.CustomFields.FirstOrDefault(i => i.Id == 571611) == null).ToList();
                 contacts = contactAll.Except(contactsWithOutGuid).ToList();
 
+
+                foreach (var cnt in contactsWithOutGuid)
+                {
+
+                }
+
+
                 // Добавим в 1С тех кто в contactsWithOutGuid
                 // Получим из 1С тнх кого создали
                 // Добавим в contacts

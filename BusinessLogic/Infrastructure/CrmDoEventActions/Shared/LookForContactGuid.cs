@@ -18,7 +18,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
             this.database = database;
         }
 
-        public async Task<string> Execute(ContactDTO amoUser)
+        public async Task<string> Find(ContactDTO amoUser)
         {
             var found = false;
 
@@ -26,7 +26,6 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
             {
                 foreach (var field in amoUser.CustomFields.Where(v => v.Id == 54667))
                 {
-
                     foreach (var phonefield in field.Values)
                     {
                         if (found != true)
@@ -42,7 +41,6 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
 
                 foreach (var field in amoUser.CustomFields.Where(v => v.Id == 54669))
                 {
-
                     foreach (var emailfield in field.Values)
                     {
                         if (found != true)

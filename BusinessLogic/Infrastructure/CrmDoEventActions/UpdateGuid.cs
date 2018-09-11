@@ -7,12 +7,15 @@ using System;
 using System.Linq;
 using WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared;
 using WebApiBusinessLogic.Models.Crm;
+using Common.Extensions.Models.Crm;
+using Mapster;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
     public class UpdateGuid : DoCrmActionBase
     {
-        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events)
+        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, [FromServices]ILogger logger)
             :base (amocrm, database)
         {
             Events.Update += DoAction;
@@ -31,12 +34,15 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                                     .FirstOrDefault();
 
 
+                //var sdff = new CreateUser1C(database).Create(amoUser);
+
+
                 var hasGuid = amoUser.CustomFields?.FirstOrDefault(it => it.Id == 571611)?.Values.FirstOrDefault().Value;
 
                 if (!String.IsNullOrEmpty(hasGuid)) return;
 
 
-                var guid = await new LookForContactGuid(database).Execute(amoUser);
+                var guid = await new LookForContactGuid(database).Find(amoUser);
 
 
                 if (!String.IsNullOrEmpty(guid))
@@ -55,14 +61,13 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         }
                     };
 
-                    amoManager.Contacts.Update(updateItem);
+                    await amoManager.Contacts.Update(updateItem);
 
                     Log.Logger = new LoggerConfiguration()
                     .WriteTo.Seq("http://logs.fitness-pro.ru:5341")
                     .CreateLogger();
 
                     Log.Information("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, amoUser.Id);
-
                 }
 
             }

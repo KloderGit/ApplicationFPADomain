@@ -1,14 +1,13 @@
-﻿using Library1C;
+﻿using Common.Configuration.Crm;
+using Common.Logging;
+using Library1C;
 using LibraryAmoCRM;
-using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Models;
-using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
-using WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared;
 using WebApiBusinessLogic.Models.Crm;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
@@ -28,6 +27,8 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
             var phones = new  CustomField();
 
+            var toUpdate = false;
+
             try
             {
                 var amoUser = amoManager.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId))
@@ -39,15 +40,22 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                 foreach(var phone in phones.Values)
                 {
-                    phone.Value = ClearPhone(phone.Value);
+                    if ( !(phone.Value == ClearPhone(phone.Value)))
+                    {
+                        phone.Value = ClearPhone(phone.Value);
+                        toUpdate = true;
+                    }                    
                 }
 
-                await amoManager.Contacts.Update(amoUser);
+                if ( toUpdate ) await amoManager.Contacts.Update(amoUser);
 
             }
             catch (Exception ex)
             {
+                var info = new MessageLocation(this);
+                info.Metod = MethodBase.GetCurrentMethod().Name;
 
+                //logger.Error("Ошибка, {@Location}", info);
             }
 
         }

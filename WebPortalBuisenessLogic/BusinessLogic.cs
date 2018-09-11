@@ -1,4 +1,6 @@
-﻿using Domain.Models.Crm;
+﻿using Common.Configuration.Crm;
+using Common.Extensions.Models.Crm;
+using Domain.Models.Crm;
 using Domain.Models.Crm.Fields;
 using Domain.Models.Education;
 using Library1C;
@@ -66,8 +68,18 @@ namespace WebPortalBuisenessLogic
                 var requesContacts = amocrm.Value.Contacts.Get().SetParam(x => x.Id = model.ContactId).Execute().Result;
                 var contact = requesContacts.FirstOrDefault().Adapt<Contact>(mapper);
 
-                var enumPhoneTypes = Enum.GetValues(typeof(PhoneType)).Cast<PhoneType>().Select(i => (int)i);
-                var phoneTypes = enumPhoneTypes.Except(contact.GetField((int)ContactFieldsEnum.Phone).Select(e => e.Enum.Value));
+                var ttt = contact.Phone();
+                var ttt2 = contact.Phone(value:"8(9031453415");
+
+                var ddd = contact.Email();
+                var ddd2 = contact.Email(value:"asd@eeee.ru");
+
+                string sdsw = contact.MailChimp();
+                var sdsw2 = contact.MailChimp(true.ToString());
+
+
+                var enumPhoneTypes = Enum.GetValues(typeof(PhoneTypeEnum)).Cast<PhoneTypeEnum>().Select(i => (int)i);
+                var phoneTypes = enumPhoneTypes.Except(contact.GetFieldByID((int)ContactFieldsEnum.Phone).Select(e => e.Enum.Value));
 
                 contact.SetField((int)ContactFieldsEnum.Phone, model.Phone, phoneTypes.FirstOrDefault());
 
