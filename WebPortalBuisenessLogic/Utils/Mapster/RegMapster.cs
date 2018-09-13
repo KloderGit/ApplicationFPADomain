@@ -28,21 +28,6 @@ namespace WebPortalBuisenessLogic.Utils.Mapster
                 .Map(dest => dest.Department, src => src.Department.Title)
                 .Map(dest => dest.Subjects, src => src.Subjects.Select(i => i.Title));
 
-
-            mapper.NewConfig<ContactDTO, Contact>()
-                .Ignore(x => x.Tags)
-                .Map(dest => dest.Leads, src => src.Leads.IDs != null ? src.Leads.IDs.Select(c => new Lead { Id = c }) : null)
-                .Map(dest => dest.Company, src => src.Company.Id != null ? new Company { Id = src.Company.Id.Value } : null)
-                .Map(dest => dest.Fields, src => src.CustomFields != null ? src.CustomFields : null)
-            ;
-
-            mapper.NewConfig<LeadDTO, Lead>()
-                .Map(dest => dest.Company, src => src.Company != null ? new Company { Id = (int)src.Company.Id } : null)
-                .Map(dest => dest.Contacts, src => src.Contacts != null ? src.Contacts.IDs.Select(c => new Contact { Id = c }) : null)
-                .Map(dest => dest.MainContact, src => src.MainContact != null ? new Contact { Id = (int)src.MainContact.Id } : null)
-                .Map(dest => dest.CustomFields, src => src.CustomFields != null ? src.CustomFields : null)
-            ;
-
             mapper.NewConfig<Lead, UpdateFormDTO>()
               .IgnoreNullValues(true)
               .Map(dest => dest.LeadId, src => src.Id)

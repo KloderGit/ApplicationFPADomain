@@ -37,7 +37,7 @@ namespace Domain.Models.Crm
 
         public IEnumerable<Tag> Tags { get; set; }
 
-        public IEnumerable<Field> CustomFields { get; set; }
+        public IEnumerable<Field> Fields { get; set; }
 
         public Company Company { get; set; }
 

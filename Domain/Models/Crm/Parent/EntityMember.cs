@@ -11,7 +11,7 @@ namespace Domain.Models.Crm.Parent
 
         public DateTime? ClosestTaskAt { get; set; }
 
-        public IEnumerable<Tag> Tags { get; set; }
+        public List<Tag> Tags { get; set; }
 
         public List<Field> Fields { get; set; }
     }

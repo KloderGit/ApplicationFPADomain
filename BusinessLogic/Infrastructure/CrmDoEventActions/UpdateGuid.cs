@@ -15,7 +15,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
     public class UpdateGuid : DoCrmActionBase
     {
-        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, [FromServices]ILogger logger)
+        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events)
             :base (amocrm, database)
         {
             Events.Update += DoAction;

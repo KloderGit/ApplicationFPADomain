@@ -32,6 +32,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                return;
             }
 
             List<ContactDTO> contacts = new List<ContactDTO>();

@@ -24,7 +24,7 @@ namespace WebPortalBuisenessLogic.Utils.Mapster
                 .Map(dest => dest.Company, src => src.Company!= null ? new Company { Id = (int)src.Company.Id } : null)
                 .Map(dest => dest.Contacts, src => src.Contacts != null ? src.Contacts.IDs.Select(c => new Contact { Id = c }) : null)
                 .Map(dest => dest.MainContact, src => src.MainContact != null ? new Contact { Id = (int)src.MainContact.Id } : null)
-                .Map(dest => dest.CustomFields, src => src.CustomFields != null ? src.CustomFields : null)
+                .Map(dest => dest.Fields, src => src.CustomFields != null ? src.CustomFields : null)
             ;
 
             config.NewConfig<Lead, UpdateFormDTO>()

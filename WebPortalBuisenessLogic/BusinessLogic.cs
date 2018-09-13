@@ -1,5 +1,6 @@
 ﻿using Common.Configuration.Crm;
 using Common.Extensions.Models.Crm;
+using Common.Mapping;
 using Domain.Models.Crm;
 using Domain.Models.Crm.Fields;
 using Domain.Models.Education;
@@ -37,7 +38,9 @@ namespace WebPortalBuisenessLogic
         public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping)
         {
             this.logger = logger;
-            this.mapper = mapping; new RegMapster(mapper);
+            this.mapper = mapping;
+                new RegMapster(mapper);
+                new RegisterMaps(mapper);
 
             var amoAccount = configuration.GetSection("providers:0:AmoCRM:connection:account:name").Value;
             var amoUser = configuration.GetSection("providers:0:AmoCRM:connection:account:email").Value;
@@ -50,8 +53,6 @@ namespace WebPortalBuisenessLogic
 
             this.database = new Lazy<UnitOfWork>(new UnitOfWork(user1C, pass1C));
         }
-
-
 
         public async Task<bool> UpdateContact(UpdateFormDTO model)
         {
@@ -68,20 +69,20 @@ namespace WebPortalBuisenessLogic
                 var requesContacts = amocrm.Value.Contacts.Get().SetParam(x => x.Id = model.ContactId).Execute().Result;
                 var contact = requesContacts.FirstOrDefault().Adapt<Contact>(mapper);
 
-                var ttt = contact.Phone();
-                var ttt2 = contact.Phone(value:"8(9031453415");
+                //var ttt = contact.Phone();
+                //var ttt2 = contact.Phone(value:"8(9031453415");
 
-                var ddd = contact.Email();
-                var ddd2 = contact.Email(value:"asd@eeee.ru");
+                //var ddd = contact.Email();
+                //var ddd2 = contact.Email(value:"asd@eeee.ru");
 
-                string sdsw = contact.MailChimp();
-                var sdsw2 = contact.MailChimp(true.ToString());
+                //string sdsw = contact.MailChimp();
+                //var sdsw2 = contact.MailChimp(true.ToString());
 
 
                 var enumPhoneTypes = Enum.GetValues(typeof(PhoneTypeEnum)).Cast<PhoneTypeEnum>().Select(i => (int)i);
-                var phoneTypes = enumPhoneTypes.Except(contact.GetFieldByID((int)ContactFieldsEnum.Phone).Select(e => e.Enum.Value));
+                //var phoneTypes = enumPhoneTypes.Except(contact.GetFieldByID((int)ContactFieldsEnum.Phone).Select(e => e.Enum.Value));
 
-                contact.SetField((int)ContactFieldsEnum.Phone, model.Phone, phoneTypes.FirstOrDefault());
+                //contact.SetField((int)ContactFieldsEnum.Phone, model.Phone, phoneTypes.FirstOrDefault());
 
             }
             catch (Exception ex)

@@ -1,9 +1,13 @@
-﻿using Library1C;
+﻿using Common.Extensions.Models.Crm;
+using Common.Mapping;
+using Domain.Models.Crm;
+using Library1C;
 using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
+using Mapster;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,6 +28,7 @@ namespace WebApiBusinessLogic
     public class BusinessLogic
     {
         ILogger logger;
+        TypeAdapterConfig mapper;
 
         DataManager amocrm;
         UnitOfWork database;
@@ -35,9 +40,12 @@ namespace WebApiBusinessLogic
         UpdateGuid updGuid; UpdatePhone updPhone;
 
 
-        public BusinessLogic(ILogger logger, IConfiguration configuration)
+        public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping)
         {
             this.logger = logger;
+            this.mapper = mapping;
+                new RegisterMaps(mapper);
+
 
             var amoAccount = configuration.GetSection("providers:0:AmoCRM:connection:account:name").Value;
             var amoUser = configuration.GetSection("providers:0:AmoCRM:connection:account:email").Value;
@@ -54,7 +62,7 @@ namespace WebApiBusinessLogic
 
 
             updGuid = new UpdateGuid(amocrm, database, eventsType);
-            updPhone = new UpdatePhone(amocrm, database, eventsType);
+            updPhone = new UpdatePhone(amocrm, database, eventsType, mapper);
 
             new RegisterMapsterConfig();
         }
@@ -93,11 +101,19 @@ namespace WebApiBusinessLogic
 
         public string GetProgramsListForAmo()
         {
-            var programs = neo.Value.Programs.GetList().Where( x => x.Type == "Программа обучения").Where( x=>x.Active );
+            //var programs = neo.Value.Programs.GetList().Where( x => x.Type == "Программа обучения").Where( x=>x.Active );
 
-            var list = programs.Select( it => new { Name = it.Title, Guid = it.Guid, Type = it.Type } );
 
-            return JsonConvert.SerializeObject(list);
+            var cont = amocrm.Contacts.Get().SetParam(x => x.Phone = "9031453412").Execute().Result;
+
+            var ertert = cont.FirstOrDefault().Adapt<Contact>(mapper);
+
+            var sdfsdf = ertert.Phones();
+
+            //var list = programs.Select( it => new { Name = it.Title, Guid = it.Guid, Type = it.Type } );
+
+            //return JsonConvert.SerializeObject(list);
+            return "";
         }
 
 

@@ -12,37 +12,18 @@ namespace Domain.Models.Crm
     {
         public int? UpdatedBy { get; set; }
 
-        public IEnumerable<Lead> Leads { get; set; }
+        public List<Lead> Leads { get; set; }
 
         public Company Company { get; set; }
 
-
-        public IEnumerable<FieldValue> GetFieldByID(int id)
+        public Contact GetChanges()
         {
-            return Fields.FirstOrDefault(x => x.Id == id).Values;
+            var contactWithChangedFields = new Contact();
+            contactWithChangedFields.Id = this.Id;
+
+            if (ChangeValueDelegate != null) ChangeValueDelegate.Invoke(contactWithChangedFields);
+
+            return contactWithChangedFields;
         }
-
-        public void SetField(int id, string value, int? @enum)
-        {
-            try
-            {
-                if (Fields.FirstOrDefault(x => x.Id == id) == null) { return; }
-
-                var currentField = GetFieldByID(id);
-
-                var currentValues = currentField.Select(x => x.Value);
-
-                if (!currentValues.Contains(value))
-                {
-                    var tttt = new FieldValue { Value = value, Enum = @enum };
-
-                    this.Fields.FirstOrDefault(x => x.Id == id).Values.Add(tttt);
-
-                }
-            }
-            catch (Exception ex)
-            { }
-        }
-
     }
 }
