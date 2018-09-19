@@ -37,7 +37,11 @@ namespace WebApiBusinessLogic
 
         CrmEventTypes eventsType = new CrmEventTypes();
 
-        UpdateGuid updGuid; UpdatePhone updPhone;
+        UpdateGuid updGuid;
+        UpdatePhone updPhone;
+        UpdateGuidByChangeLeadStatus updByStatus;
+
+        CreateUser CreateUser;
 
 
         public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping)
@@ -61,10 +65,13 @@ namespace WebApiBusinessLogic
             neo = new Lazy<ServiceLibraryNeoClient.Implements.DataManager>();
 
 
-            updGuid = new UpdateGuid(amocrm, database, eventsType);
-            updPhone = new UpdatePhone(amocrm, database, eventsType, mapper);
+            updGuid = new UpdateGuid(amocrm, database, eventsType, mapper, logger);
+            updPhone = new UpdatePhone(amocrm, database, eventsType, mapper, logger);
+            updByStatus = new UpdateGuidByChangeLeadStatus(amocrm, database, eventsType, mapper, logger);
+            CreateUser = new CreateUser(amocrm, database, eventsType, mapper, logger);
 
             new RegisterMapsterConfig();
+
         }
 
         public void GetEvent(CrmEvent item)
@@ -88,7 +95,7 @@ namespace WebApiBusinessLogic
                     case "note":
                         eventsType.OnNote(item);
                         break;
-                    case "ChangeStatus":
+                    case "status":
                         eventsType.OnStatus(item);
                         break;
                     default:
@@ -141,6 +148,7 @@ namespace WebApiBusinessLogic
         //    var result = amocrm.Repository<T>();
         //    return result.Update;
         //}
+
 
     }
 }

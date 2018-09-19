@@ -1,7 +1,13 @@
-﻿using Library1C;
+﻿using Common.Configuration.Crm;
+using Common.Extensions;
+using Common.Extensions.Models.Crm;
+using Domain.Models.Crm;
+using Library1C;
 using LibraryAmoCRM;
 using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Models;
+using Mapster;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,22 +18,33 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
     public class UpdateGuidByChangeLeadStatus : DoCrmActionBase
     {
-        public UpdateGuidByChangeLeadStatus(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events)
+        ILogger logger;
+        TypeAdapterConfig mapper;
+
+        public UpdateGuidByChangeLeadStatus(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
         : base(amocrm, database)
         {
-            Events.Update += DoAction;
-            Events.Add += DoAction;
+            //Events.Update += DoAction;
+            //Events.Add += DoAction;
+
+            this.mapper = mapper;
+            this.logger = logger;
         }
 
         public async override void DoAction(object sender, CrmEvent e)
         {
             if (e.Entity != "leads" || String.IsNullOrEmpty(e.EntityId)) return;
 
-            LeadDTO lead = null;
+            Lead lead;
+
+            // Получить сделку и проверить наличие Guid
             try
             {
-                lead = amoManager.Leads.Get().SetParam(x => x.Id = int.Parse(e.EntityId)).Execute().Result.FirstOrDefault();
-                if ( lead == null || lead.CustomFields.FirstOrDefault(x => x.Id == 570933) == null) return;
+                var query = await amoManager.Leads.Get().SetParam(x => x.Id = int.Parse(e.EntityId)).Execute();
+
+                lead = query.FirstOrDefault().Adapt<Lead>(mapper);
+
+                if (lead == null || lead.Fields.FirstOrDefault(x => x.Id == (int)LeadFieldsEnum.Guid) == null) return;
             }
             catch (Exception ex)
             {
@@ -35,35 +52,36 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 return;
             }
 
-            List<ContactDTO> contacts = new List<ContactDTO>();
+            try
+            {
+                IEnumerable<Contact> loadedContacts;
+
+                var query = amoManager.Contacts.Get();
+
+                for (var i = 0; i < lead.Contacts.Count; i++)
+                {
+                    query = query.SetParam(x => x.Id = lead.Contacts[i].Id);
+                }
+
+                var result = await query.Execute();
+
+                loadedContacts = result.Adapt<IEnumerable<Contact>>(mapper);
+
+                for (var i = 0; i < lead.Contacts.Count; i++)
+                {
+                    lead.Contacts[i] = loadedContacts.FirstOrDefault(x => x.Id == lead.Contacts[i].Id);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            if (lead.Contacts == null || lead.Contacts.Where( x => String.IsNullOrEmpty(x.Guid() ) ).Count() > 0) return;
 
             try
             {
-                var contactAll = new List<ContactDTO>();
-                var contactsWithOutGuid = new List<ContactDTO>();                
-
-                foreach (var i in lead.Contacts?.IDs)
-                {
-                    var contact = amoManager.Contacts.Get().SetParam(d => d.Id = i).Execute().Result.FirstOrDefault();
-                    if (contact != null) { contactAll.Add(contact); }
-                }
-
-                contactsWithOutGuid = contactAll.Where(ip => ip.CustomFields.FirstOrDefault(i => i.Id == 571611) == null).ToList();
-                contacts = contactAll.Except(contactsWithOutGuid).ToList();
-
-
-                foreach (var cnt in contactsWithOutGuid)
-                {
-
-                }
-
-
-                // Добавим в 1С тех кто в contactsWithOutGuid
-                // Получим из 1С тнх кого создали
-                // Добавим в contacts
-
-                // Результат - Контакты и сделка имеют гуиды - Отправляем в 1С
-
+                
             }
             catch (Exception ex)
             {

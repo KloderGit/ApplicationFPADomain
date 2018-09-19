@@ -22,13 +22,26 @@ namespace Common.Configuration.Crm
         Agreement = 573355
     }
 
-    public enum HowToKnowEnum
+    public enum LeadFieldsEnum
     {
-        NotSet = 0,
-        Recommendation = 1143911,
-        Friends = 1143913,
-        Advertising = 1143915,
-        Internet = 1143917,
-        Other = 1143919
+        Source = 66339,
+        Seminar = 66349,
+        SeminarDate = 72333,
+        StudentCount = 72411,
+        SeminarWishDate = 72413,
+        ProgramStartDate = 72417,
+        ContractExpireDate = 72419,
+        Program = 227457,
+        LeadIsPaid = 497267,
+        SmsSent = 549619,
+        Teacher = 551795,
+        DistantGroup = 554029,
+        PersonalFormLink = 565513,
+        ConfirmParcipate = 566027,
+        ParcipateForm = 566891,
+        EducationType = 566897,
+        Guid = 570933,
+        Promotions = 574701
     }
+
 }

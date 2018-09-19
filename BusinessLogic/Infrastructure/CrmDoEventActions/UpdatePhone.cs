@@ -9,6 +9,7 @@ using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Models;
 using Mapster;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,14 +22,16 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
     public class UpdatePhone : DoCrmActionBase
     {
         TypeAdapterConfig mapper;
+        ILogger logger;
 
-        public UpdatePhone(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper)
+        public UpdatePhone(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
             :base (amocrm, database)
         {
             Events.Update += DoAction;
             Events.Add += DoAction;
 
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         public async override void DoAction(object sender, CrmEvent e)
@@ -64,7 +67,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     Metod = MethodBase.GetCurrentMethod().Name
                 };
 
-                //logger.Error("Ошибка, {@Location}", info);
+                logger.Error("Ошибка, {@Message}, {@Location}", ex.Message, info);
             }
 
         }

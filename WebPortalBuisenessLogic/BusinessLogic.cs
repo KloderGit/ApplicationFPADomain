@@ -1,8 +1,5 @@
-﻿using Common.Configuration.Crm;
-using Common.Extensions.Models.Crm;
-using Common.Mapping;
+﻿using Common.Mapping;
 using Domain.Models.Crm;
-using Domain.Models.Crm.Fields;
 using Domain.Models.Education;
 using Library1C;
 using LibraryAmoCRM;
@@ -17,10 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using WebPortalBuisenessLogic.Infrastructure.Extended;
 using WebPortalBuisenessLogic.Models.Crm;
 using WebPortalBuisenessLogic.Models.DataBase;
 using WebPortalBuisenessLogic.Utils.Mapster;
@@ -245,33 +239,33 @@ namespace WebPortalBuisenessLogic
 
         public IEnumerable<ProgramDTO> GetDataBasePrograms()
         {
-            var db = new ServiceLibraryNeoClient.Implements.DataManager();
+            //var db = new ServiceLibraryNeoClient.Implements.DataManager();
 
-            var progs = db.Programs.GetList();
+            //var progs = db.Programs.GetList();
 
-            var result = progs.Adapt<IEnumerable<ProgramDTO>>(mapper);
+            //var result = progs.Adapt<IEnumerable<ProgramDTO>>(mapper);
 
-            return result;
+            return null;
         }
 
         public async Task<bool> UpdateDataBasePrograms()
         {
-            var db = new ServiceLibraryNeoClient.Implements.DataManager();
+            //var db = new ServiceLibraryNeoClient.Implements.DataManager();
 
-            var service1C = new Library1C.UnitOfWork("Kloder", "Kaligula2");
+            //var service1C = new Library1C.UnitOfWork("Kloder", "Kaligula2");
 
-            var request = await service1C.Programs.GetList();
+            //var request = await service1C.Programs.GetList();
 
-            var programs = request.Adapt<IEnumerable<EducationProgram>>(mapper);
+            //var programs = request.Adapt<IEnumerable<EducationProgram>>(mapper);
 
-            var ddd = programs.Adapt<IEnumerable<ProgramNode>>(mapper);
+            //var ddd = programs.Adapt<IEnumerable<ProgramNode>>(mapper);
 
 
-            foreach (var item in programs.Where(p => p.Active))
-            {
-                var m = item.Adapt<ProgramNode>(mapper);
-                db.Programs.Add(m);
-            }
+            //foreach (var item in programs.Where(p => p.Active))
+            //{
+            //    var m = item.Adapt<ProgramNode>(mapper);
+            //    db.Programs.Add(m);
+            //}
 
             return true;
         }

@@ -12,342 +12,237 @@ namespace Common.Extensions.Models.Crm
 {
     public static class ContactExtensions
     {
-        public static string Position(this Contact contact, string value = "")
+        public static string Position(this Contact contact) => contact.Fields?.FirstOrDefault(x => x.Id == (int) ContactFieldsEnum.Position)?.Values.FirstOrDefault().Value;
+
+        public static void Position(this Contact contact, string value)
         {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Position))
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Position)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Position });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Position).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
+        }
+
+        public static Dictionary<PhoneTypeEnum, string> Phones(this Contact contact) => contact.Fields?.FirstOrDefault(x => x.Id == (int) ContactFieldsEnum.Phone)?.Values?
+                 .ToDictionary(k => (PhoneTypeEnum) k.Enum.Value, v => v.Value);
+
+        public static void Phones(this Contact contact, PhoneTypeEnum type, string value)
+        {
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Phone)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Phone, Values = new List<FieldValue>() });
+
+                var current = x.Phones();
+                if (current != null && current.Any(p => p.Key == type))
                 {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Position).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Position(contact.Position()); };
+                    x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Phone).Values.FirstOrDefault( p=>p.Enum == (int)type ).Value = value.LeaveJustDigits();
                 }
                 else
                 {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Position, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Position(contact.Position()); };
+                    x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Phone).Values.Add( new FieldValue { Enum = (int)type, Value = value.LeaveJustDigits() } );
                 }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Position).Values.FirstOrDefault().Value;
+            };
         }
 
-        public static Dictionary<PhoneTypeEnum, string> Phones(this Contact contact, Dictionary<PhoneTypeEnum, string> value = null )
-        {
-            if (value != null)
-            {
-                if (contact.Fields == null) contact.Fields = new List<Field>();
+        public static Dictionary<EmailTypeEnum, string> Email(this Contact contact) => contact.Fields?.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Email)?.Values?
+                 .ToDictionary(k => (EmailTypeEnum)k.Enum.Value, v => v.Value);
 
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Phone))
+
+        public static void Email(this Contact contact, EmailTypeEnum type, string value)
+        {
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Email)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Email, Values = new List<FieldValue>() });
+
+                var current = x.Email();
+                if (current != null && current.Any(p => p.Key == type))
                 {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Phone).Values = new List<FieldValue>();
+                    x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Email).Values.FirstOrDefault(p => p.Enum == (int)type).Value = value.ClearEmail();
                 }
                 else
                 {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Phone, Values = new List<FieldValue>() });
+                    x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Email).Values.Add(new FieldValue { Enum = (int)type, Value = value.ClearEmail() });
                 }
-
-                foreach (var item in value)
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Phone).Values.Add(new FieldValue { Enum = (int)item.Key, Value = item.Value.LeaveJustDigits() });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Phones(value); };
-                }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Phone)?.Values
-                .ToDictionary(k => (PhoneTypeEnum)k.Enum.Value, v => v.Value);
+            };
         }
 
-        public static Dictionary<PhoneTypeEnum, string> Phones(this Contact contact, PhoneTypeEnum type, string value)
+        public static Dictionary<MessengerTypeEnum, string> Messenger(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int) ContactFieldsEnum.Messanger)?
+            .Values?
+            .ToDictionary(k => (MessengerTypeEnum) k.Enum.Value, v => v.Value);
+
+
+        public static void Messenger(this Contact contact, MessengerTypeEnum type, string value)
         {
-            if (value != null)
-            {
-                if (contact.Fields == null) contact.Fields = new List<Field>();
-                if (!contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Phone))
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Messanger)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Messanger, Values = new List<FieldValue>() });
+
+                var current = x.Messenger();
+                if (current != null && current.Any(p => p.Key == type))
                 {
-                    type = type == PhoneTypeEnum.NotSet ? PhoneTypeEnum.MOB : type;
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Phone, Values = new List<FieldValue> { new FieldValue { Enum = (int)type, Value = value.LeaveJustDigits() } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Phones(type,value); };
+                    x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Messanger).Values.FirstOrDefault(p => p.Enum == (int)type).Value = value.ClearEmail();
                 }
                 else
                 {
-                    var current = contact.Phones();
-                    if (current.Any(x => x.Key == type))
-                    {
-                        current[type] = value.LeaveJustDigits();
-                    }
-                    else
-                    {
-                        current.Add(type, value.LeaveJustDigits());
-                    }
-                    contact.Phones(current);
+                    x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Messanger).Values.Add(new FieldValue { Enum = (int)type, Value = value.ClearEmail() });
                 }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Phone)?.Values
-                .ToDictionary(k => (PhoneTypeEnum)k.Enum.Value, v => v.Value);
+            };
         }
 
-        public static Dictionary<EmailTypeEnum, string> Email(this Contact contact, EmailTypeEnum type = EmailTypeEnum.NotSet, string value = "")
+        public static string City(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int) ContactFieldsEnum.City)?
+            .Values?.FirstOrDefault().Value;
+
+
+        public static void City(this Contact contact, string value)
         {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Email))
-                {
-                    if (type == EmailTypeEnum.NotSet)
-                    {
-                            var enumEmailTypes = Enum.GetValues(typeof(EmailTypeEnum)).Cast<EmailTypeEnum>().Select(i => (int)i);
-                            var emailTypes = enumEmailTypes.Except(contact.Email().Select(e => (int)e.Key)).ToList();
-                            emailTypes.Remove((int)EmailTypeEnum.NotSet);
-
-                            type = (EmailTypeEnum)emailTypes.FirstOrDefault();
-
-                        contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Email).Values.Add(new FieldValue { Enum = (int)type, Value = value.ClearEmail() });
-                        contact.ChangeValueDelegate += delegate (Contact x) { x.Email(type, value.ClearEmail()); };
-                    }
-                    else
-                    {
-                        contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Email).Values.Add(new FieldValue { Enum = (int)type, Value = value });
-                        contact.ChangeValueDelegate += delegate (Contact x) { x.Email(EmailTypeEnum.PRIV, value.ClearEmail()); };
-                    }
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Email, Values = new List<FieldValue> { new FieldValue { Enum = (int)EmailTypeEnum.PRIV, Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Email(EmailTypeEnum.PRIV, value.ClearEmail()); };
-                }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Email).Values
-                .ToDictionary(k => (EmailTypeEnum)k.Enum.Value, v => v.Value);
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.City)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.City });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.City).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
         }
 
-        public static Dictionary<MessengerTypeEnum, string> Messenger(this Contact contact, MessengerTypeEnum type = MessengerTypeEnum.NotSet, string value = "")
+        public static bool MailChimp(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.MailChimp)?
+            .Values?
+            .FirstOrDefault().Value == "1" ? true : false;
+
+
+        public static void MailChimp(this Contact contact, bool value)
         {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Messanger))
-                {
-                    var isAviable = contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Messanger).Values.Any(x => x.Value.Replace(" ", "") == value.Replace(" ", ""));
-
-                    if (!isAviable)
-                    {
-                        if (type == MessengerTypeEnum.NotSet) throw new ArgumentException("Не указан тип мессенжера");
-                        contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Messanger).Values.Add(new FieldValue { Enum = (int)type, Value = value });
-                        contact.ChangeValueDelegate += delegate (Contact x) { x.Messenger(type, value.Replace(" ", "")); };
-                    }
-                }
-                else
-                {
-                    if (type == MessengerTypeEnum.NotSet) throw new ArgumentException("Не указан тип мессенжера");
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Messanger, Values = new List<FieldValue> { new FieldValue { Enum = (int)type, Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Messenger(type, value.Replace(" ", "")); };
-                }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Messanger).Values
-                .ToDictionary(k => (MessengerTypeEnum)k.Enum.Value, v => v.Value);
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.MailChimp)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.MailChimp });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.MailChimp).Values = new List<FieldValue> { new FieldValue { Value = value == true? "1": "0" } };
+            };
         }
 
-        public static string City(this Contact contact, string value = "")
-        {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.City))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.City).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.City(contact.City()); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.City, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.City(contact.City()); };
-                }
-            }
+        public static Dictionary<int, string> HowToKnow(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow)?
+            .Values?
+            .ToDictionary(k => k.Enum.Value, v => v.Value);
 
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.City).Values.FirstOrDefault().Value;
+        //public static Dictionary<int, string> HowToKnow(this Contact contact, int value = 0)
+        //{
+        //    if (value != 0)
+        //    {
+        //        if (contact.Fields == null) contact.Fields = new List<Field>();
+
+        //        var isAviable = contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow).Values.Any(x => x.Enum == value);
+
+        //        if (!isAviable)
+        //        {
+        //            contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow).Values.Add(new FieldValue { Enum = value });
+        //            contact.ChangeValueDelegate += delegate (Contact x) { x.HowToKnow(value); };
+        //        }
+
+        //    }
+
+        //    return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow).Values
+        //        .ToDictionary(k => (int)k.Enum.Value, v => v.Value);
+        //}
+
+        public static DateTime? Birthday(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Birthday)?
+            .Values?
+            .FirstOrDefault().Value.ToDateTime('/');
+
+
+        public static void Birthday(this Contact contact, DateTime value)
+        {
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Birthday)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Birthday });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Birthday).Values = new List<FieldValue> { new FieldValue { Value = value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) } };
+            };
         }
 
-        public static bool? MailChimp(this Contact contact, bool? value = null)
+        public static string Education(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Education)?
+            .Values?
+            .FirstOrDefault().Value;
+
+        public static void Education(this Contact contact, string value)
         {
-            if (value.HasValue && value != null)
-            {
-                var digit = value.Value.ToString().ToUpper() == "TRUE" ? "1" : "0";
-
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.MailChimp))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.MailChimp).Values.FirstOrDefault().Value = digit;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.MailChimp(contact.MailChimp()); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.MailChimp, Values = new List<FieldValue> { new FieldValue { Value = digit } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.MailChimp(contact.Agreement()); };
-                }
-            }
-
-            if (contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.MailChimp) == null)
-            {
-                return null;
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.MailChimp)?.Values.FirstOrDefault().Value == "1" ? true : false;
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Education)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Education });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Education).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
         }
 
-        public static Dictionary<HowToKnowEnum, string> HowToKnow(this Contact contact, HowToKnowEnum value = HowToKnowEnum.NotSet)
+        public static string Experience(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Experience)?
+            .Values?
+            .FirstOrDefault().Value;
+
+        public static void Experience(this Contact contact, string value)
         {
-            if (value != HowToKnowEnum.NotSet)
-            {
-                var isAviable = contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow).Values.Any(x => x.Enum == (int)value);
-
-                if (!isAviable)
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow).Values.Add(new FieldValue { Enum = (int)value });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.HowToKnow(value); };
-                }
-
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.HowToKnow).Values
-                .ToDictionary(k => (HowToKnowEnum)k.Enum.Value, v => v.Value);
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Experience)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Experience });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Experience).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
         }
 
-        public static DateTime Birthday(this Contact contact, DateTime? value = null)
-        {
-            if (value.HasValue && value.Value != null)
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Birthday))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Birthday).Values.FirstOrDefault().Value = value.Value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Birthday(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Birthday, Values = new List<FieldValue> { new FieldValue { Value = value.Value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) } } });
-                }
-            }
+        public static string GroupPart(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.GroupPart)?
+            .Values?
+            .FirstOrDefault().Value;
 
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Birthday).Values.FirstOrDefault().Value.ToDateTime();
+        public static void GroupPart(this Contact contact, string value)
+        {
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.GroupPart)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.GroupPart });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.GroupPart).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
         }
 
-        public static string Education(this Contact contact, string value = "")
-        {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Education))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Education).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Education(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Education, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Education(value); };
-                }
-            }
+        public static string Location(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Location)?
+            .Values?
+            .FirstOrDefault().Value;
 
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Education).Values.FirstOrDefault().Value;
+        public static void Location(this Contact contact, string value)
+        {
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Location)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Location });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Location).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
         }
 
-        public static string Experience(this Contact contact, string value = "")
-        {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Experience))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Experience).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Experience(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Experience, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Experience(value); };
-                }
-            }
+        public static string Guid(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Guid)?
+            .Values?
+            .FirstOrDefault().Value;
 
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Experience).Values.FirstOrDefault().Value;
+
+        public static void Guid(this Contact contact, string value)
+        {
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Guid)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Guid });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Guid).Values = new List<FieldValue> { new FieldValue { Value = value } };
+            };
         }
 
-        public static string GroupPart(this Contact contact, string value = "")
+        public static bool Agreement(this Contact contact) => contact.Fields?
+            .FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Agreement)?
+            .Values?
+            .FirstOrDefault().Value == "1" ? true : false;
+
+
+        public static void Agreement(this Contact contact, bool value)
         {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.GroupPart))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.GroupPart).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.GroupPart(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.GroupPart, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.GroupPart(value); };
-                }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.GroupPart).Values.FirstOrDefault().Value;
-        }
-
-        public static string Location(this Contact contact, string value = "")
-        {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Location))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Location).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Location(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Location, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Location(value); };
-                }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Location).Values.FirstOrDefault().Value;
-        }
-
-        public static string Guid(this Contact contact, string value = "")
-        {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Guid))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Guid).Values.FirstOrDefault().Value = value;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Guid(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Guid, Values = new List<FieldValue> { new FieldValue { Value = value } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Guid(value); };
-                }
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Guid).Values.FirstOrDefault().Value;
-        }
-
-        public static bool? Agreement(this Contact contact, bool? value = null)
-        {
-            if (value.HasValue && value != null)
-            {
-                var digit = value.Value.ToString().ToUpper() == "TRUE" ? "1" : "0";
-
-                if (contact.Fields.Any(x => x.Id == (int)ContactFieldsEnum.Agreement))
-                {
-                    contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Agreement).Values.FirstOrDefault().Value = digit;
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Agreement(value); };
-                }
-                else
-                {
-                    contact.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Agreement, Values = new List<FieldValue> { new FieldValue { Value = digit } } });
-                    contact.ChangeValueDelegate += delegate (Contact x) { x.Agreement(value); };
-                }
-            }
-
-            if (contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Agreement) == null)
-            {
-                return null;
-            }
-
-            return contact.Fields.FirstOrDefault(x => x.Id == (int)ContactFieldsEnum.Agreement)?.Values.FirstOrDefault().Value == "1" ? true : false;
+            contact.ChangeValueDelegate += delegate (Contact x) {
+                x.Fields = x.Fields ?? new List<Field>();
+                if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Agreement)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Agreement });
+                x.Fields.FirstOrDefault(fl => fl.Id == (int)ContactFieldsEnum.Agreement).Values = new List<FieldValue> { new FieldValue { Value = value == true ? "1" : "0" } };
+            };
         }
     }
 }

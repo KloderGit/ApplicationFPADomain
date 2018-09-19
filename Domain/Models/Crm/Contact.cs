@@ -16,6 +16,8 @@ namespace Domain.Models.Crm
 
         public Company Company { get; set; }
 
+        public Action<Contact> ChangeValueDelegate;
+
         public Contact GetChanges()
         {
             var contactWithChangedFields = new Contact();

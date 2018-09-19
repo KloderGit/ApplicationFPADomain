@@ -20,7 +20,5 @@ namespace Domain.Models.Crm.Parent
         public Int32? AccountId { get; set; }
 
         public Int32? GroupId { get; set; }
-
-        public Action<Contact> ChangeValueDelegate;
     }
 }
