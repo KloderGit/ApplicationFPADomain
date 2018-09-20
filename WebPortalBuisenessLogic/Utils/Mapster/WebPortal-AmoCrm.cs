@@ -27,16 +27,16 @@ namespace WebPortalBuisenessLogic.Utils.Mapster
                 .Map(dest => dest.Fields, src => src.CustomFields != null ? src.CustomFields : null)
             ;
 
-            config.NewConfig<Lead, UpdateFormDTO>()
-              .IgnoreNullValues(true)
-              .Map(dest => dest.LeadId, src => src.Id)
-              .Map(dest => dest.ContactId, src => src.MainContact.Id)
-              .Map(dest => dest.Name, src => src.MainContact != null ? src.MainContact.Name : null)
-              .Map(dest => dest.Phone, src => src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54667) != null ?
-                                                    src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54667).Values.FirstOrDefault().Value : null)
-              .Map(dest => dest.Email, src => src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54669) != null ?
-                                                    src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54669).Values.FirstOrDefault().Value : null)
-              ;
+            //config.NewConfig<Lead, UpdateFormDTO>()
+            //  .IgnoreNullValues(true)
+            //  .Map(dest => dest.LeadId, src => src.Id)
+            //  .Map(dest => dest.ContactId, src => src.MainContact.Id)
+            //  .Map(dest => dest.Name, src => src.MainContact != null ? src.MainContact.Name : null)
+            //  .Map(dest => dest.Phone, src => src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54667) != null ?
+            //                                        src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54667).Values.FirstOrDefault().Value : null)
+            //  .Map(dest => dest.Email, src => src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54669) != null ?
+            //                                        src.MainContact.Fields.FirstOrDefault(pr => pr.Id == 54669).Values.FirstOrDefault().Value : null)
+            //  ;
         }
     }
 }

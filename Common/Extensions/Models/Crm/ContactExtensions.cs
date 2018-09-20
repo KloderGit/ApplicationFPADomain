@@ -16,6 +16,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Position(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Position)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Position });
@@ -28,6 +30,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Phones(this Contact contact, PhoneTypeEnum type, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Phone)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Phone, Values = new List<FieldValue>() });
@@ -50,6 +54,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Email(this Contact contact, EmailTypeEnum type, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Email)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Email, Values = new List<FieldValue>() });
@@ -74,6 +80,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Messenger(this Contact contact, MessengerTypeEnum type, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Messanger)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Messanger, Values = new List<FieldValue>() });
@@ -97,6 +105,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void City(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.City)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.City });
@@ -110,8 +120,10 @@ namespace Common.Extensions.Models.Crm
             .FirstOrDefault().Value == "1" ? true : false;
 
 
-        public static void MailChimp(this Contact contact, bool value)
+        public static void MailChimp(this Contact contact, bool? value)
         {
+            if (!value.HasValue || value==null) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.MailChimp)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.MailChimp });
@@ -152,6 +164,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Birthday(this Contact contact, DateTime value)
         {
+            if (value == null || value == DateTime.MinValue) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Birthday)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Birthday });
@@ -166,6 +180,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Education(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Education)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Education });
@@ -180,6 +196,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Experience(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Experience)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Experience });
@@ -194,6 +212,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void GroupPart(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.GroupPart)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.GroupPart });
@@ -208,6 +228,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Location(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Location)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Location });
@@ -223,6 +245,8 @@ namespace Common.Extensions.Models.Crm
 
         public static void Guid(this Contact contact, string value)
         {
+            if (String.IsNullOrEmpty(value)) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Guid)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Guid });
@@ -236,8 +260,10 @@ namespace Common.Extensions.Models.Crm
             .FirstOrDefault().Value == "1" ? true : false;
 
 
-        public static void Agreement(this Contact contact, bool value)
+        public static void Agreement(this Contact contact, bool? value)
         {
+            if (!value.HasValue || value == null) return;
+
             contact.ChangeValueDelegate += delegate (Contact x) {
                 x.Fields = x.Fields ?? new List<Field>();
                 if (!x.Fields.Any(fl => fl.Id == (int)ContactFieldsEnum.Agreement)) x.Fields.Add(new Field { Id = (int)ContactFieldsEnum.Agreement });

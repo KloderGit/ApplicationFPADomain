@@ -1,4 +1,5 @@
-﻿using Common.Mapping;
+﻿using Common.Extensions.Models.Crm;
+using Common.Mapping;
 using Domain.Models.Crm;
 using Domain.Models.Education;
 using Library1C;
@@ -34,7 +35,7 @@ namespace WebPortalBuisenessLogic
             this.logger = logger;
             this.mapper = mapping;
                 new RegMapster(mapper);
-                new RegisterMaps(mapper);
+            new RegisterMaps(mapper);
 
             var amoAccount = configuration.GetSection("providers:0:AmoCRM:connection:account:name").Value;
             var amoUser = configuration.GetSection("providers:0:AmoCRM:connection:account:email").Value;
@@ -48,84 +49,36 @@ namespace WebPortalBuisenessLogic
             this.database = new Lazy<UnitOfWork>(new UnitOfWork(user1C, pass1C));
         }
 
-        public async Task<bool> UpdateContact(UpdateFormDTO model)
-        {
-            bool result = false;
 
-            if (model.ContactId == 0)
-            {
-                result = await AddFromForm(model);
-                return result ? true : false;
-            }
+
+
+        public async Task<bool> UpdateLeadAndContact(WizardDTO model)
+        {
+            var lead = model.Adapt<Lead>(mapper);
+            lead.Program(model.Program);
+
+            var leadDTO = lead.GetChanges().Adapt<LeadDTO>(mapper);
+            leadDTO.Name = "Сделка с планшета";
+            if (model.Program != 0) leadDTO.Name = amocrm.Value.Account.Embedded.CustomFields.Leads.FirstOrDefault(k => k.Key == 227457).Value.Enums.FirstOrDefault(x=>x.Key == model.Program).Value;
+
+            var contact = model.Adapt<Contact>(mapper);
+            contact.Phones(PhoneTypeEnum.MOB, model.Phone);
+            contact.Email(EmailTypeEnum.PRIV, model.Email);
+            contact.Birthday(model.Birthday);
+            contact.City(model.City);
+            contact.Location(model.Subway);
+            contact.Education(model.Education);
+            contact.Experience(model.Expirience);
+            contact.GroupPart(model.ProgramPart.ToString());
+
+            var contactDTO = contact.GetChanges().Adapt<ContactDTO>(mapper);
+            contactDTO.Name = model.Name;
 
             try
             {
-                var requesContacts = amocrm.Value.Contacts.Get().SetParam(x => x.Id = model.ContactId).Execute().Result;
-                var contact = requesContacts.FirstOrDefault().Adapt<Contact>(mapper);
+                await amocrm.Value.Contacts.Update(contactDTO);
 
-                //var ttt = contact.Phone();
-                //var ttt2 = contact.Phone(value:"8(9031453415");
-
-                //var ddd = contact.Email();
-                //var ddd2 = contact.Email(value:"asd@eeee.ru");
-
-                //string sdsw = contact.MailChimp();
-                //var sdsw2 = contact.MailChimp(true.ToString());
-
-
-                var enumPhoneTypes = Enum.GetValues(typeof(PhoneTypeEnum)).Cast<PhoneTypeEnum>().Select(i => (int)i);
-                //var phoneTypes = enumPhoneTypes.Except(contact.GetFieldByID((int)ContactFieldsEnum.Phone).Select(e => e.Enum.Value));
-
-                //contact.SetField((int)ContactFieldsEnum.Phone, model.Phone, phoneTypes.FirstOrDefault());
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-
-            return result;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public async Task<bool> UpdateFromForm(UpdateFormDTO model)
-        {
-            var d = UpdateContact(model);
-
-            try
-            {
-                var contact = PrepareContact(model);
-
-
-                await amocrm.Value.Contacts.Update(contact);
-
-                var lead = new LeadDTO
-                {
-                    Id = model.LeadId,
-                    CustomFields = new List<CustomField> {
-                    new CustomField{
-                        Id = 227457,
-                        Values = new[] {
-                            new CustomFieldValue{ Value = model.Program.ToString() }
-                        }
-                    }
-                }
-                };
-
-                await amocrm.Value.Leads.Update(lead);
+                await amocrm.Value.Leads.Update(leadDTO);
 
                 return true;
             }
@@ -133,70 +86,18 @@ namespace WebPortalBuisenessLogic
             {
                 return false;
             }
+
+
         }
 
-        public async Task<bool> AddFromForm(UpdateFormDTO model)
-        {
-            try
-            {
-                var contact = PrepareContact(model);
-                contact.ResponsibleUserId = 2079676;
-
-                var amoContact = !String.IsNullOrEmpty(model.Phone) ? findByPhone(model.Phone) : findByEmail(model.Email);
-
-                amoContact = amoContact ?? amocrm.Value.Contacts.Add(contact).Result;
-
-                var lead = new LeadDTO
-                {
-                    Name = "Сделка с планшета - Тест",
-                    ResponsibleUserId = 2079676,
-                    Status = 17793889,
-                    CustomFields = new List<CustomField> {
-                    new CustomField{
-                        Id = 227457,
-                        Values = new[] {
-                            new CustomFieldValue{ Value = model.Program.ToString() }
-                        }
-                    }
-                }
-                };
-
-                lead = await amocrm.Value.Leads.Add(lead);
-
-                lead.Contacts = new ContactsField { IDs = new List<int> { amoContact.Id.Value } };
-
-                await amocrm.Value.Leads.Update(lead);
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-            
-
-            ContactDTO findByPhone(string phone)
-            {
-                var query = amocrm.Value.Contacts.Get().SetParam(x => x.Phone = phone).Execute().Result;
-                return query?.FirstOrDefault();
-            }
-
-            ContactDTO findByEmail(string email)
-            {
-                var query = amocrm.Value.Contacts.Get().SetParam(x => x.Query = email).Execute().Result;
-                return query?.FirstOrDefault();
-            }
-        }
-
-
-        public async Task<IEnumerable<UpdateFormDTO>> GetPreparedLeads()
+        public async Task<IEnumerable<WizardDTO>> GetPreparedLeads()
         {
             return await GetLeadsByStatus(17793889);
         }
 
-        public async Task<IEnumerable<UpdateFormDTO>> GetLeadsByStatus(int status)
+        public async Task<IEnumerable<WizardDTO>> GetLeadsByStatus(int status)
         {
-            IEnumerable<UpdateFormDTO> result = new List<UpdateFormDTO>();
+            IEnumerable<WizardDTO> result = new List<WizardDTO>();
 
             try
             {
@@ -210,7 +111,7 @@ namespace WebPortalBuisenessLogic
                     ld[xx].MainContact = await GetContactById(ld[xx].MainContact.Id);
                 }
 
-                result = ld.Adapt<IEnumerable<UpdateFormDTO>>(mapper);
+                result = ld.Adapt<IEnumerable<WizardDTO>>(mapper);
             }
             catch (Exception ex)
             {
@@ -226,170 +127,14 @@ namespace WebPortalBuisenessLogic
             return contacts.FirstOrDefault().Adapt<Contact>(mapper);
         }
 
-        public async Task<UpdateFormDTO> GetLeadById(int id)
+        public async Task<WizardDTO> GetLeadById(int id)
         {
             var queryLead = await amocrm.Value.Leads.Get().SetParam(x => x.Id = id).Execute();
             var lead = queryLead.FirstOrDefault().Adapt<Lead>(mapper);
 
             lead.MainContact = await GetContactById(lead.MainContact.Id);
 
-            return lead.Adapt<UpdateFormDTO>(mapper);
-        }
-
-
-        public IEnumerable<ProgramDTO> GetDataBasePrograms()
-        {
-            //var db = new ServiceLibraryNeoClient.Implements.DataManager();
-
-            //var progs = db.Programs.GetList();
-
-            //var result = progs.Adapt<IEnumerable<ProgramDTO>>(mapper);
-
-            return null;
-        }
-
-        public async Task<bool> UpdateDataBasePrograms()
-        {
-            //var db = new ServiceLibraryNeoClient.Implements.DataManager();
-
-            //var service1C = new Library1C.UnitOfWork("Kloder", "Kaligula2");
-
-            //var request = await service1C.Programs.GetList();
-
-            //var programs = request.Adapt<IEnumerable<EducationProgram>>(mapper);
-
-            //var ddd = programs.Adapt<IEnumerable<ProgramNode>>(mapper);
-
-
-            //foreach (var item in programs.Where(p => p.Active))
-            //{
-            //    var m = item.Adapt<ProgramNode>(mapper);
-            //    db.Programs.Add(m);
-            //}
-
-            return true;
-        }
-
-
-
-        private ContactDTO PrepareContact(UpdateFormDTO model)
-        {
-            var contact = new ContactDTO
-            {
-                Name = model.Name,
-                CustomFields = new List<CustomField>()
-            };
-
-            if (model.ContactId != 0)
-            {
-                contact.Id = model.ContactId;
-            }
-
-            if (!String.IsNullOrEmpty(model.Phone))
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                    new CustomField
-                    {
-                        Id = 54667,
-                        Values = new[] {
-                            new CustomFieldValue{ Value = model.Phone, Enum = 114611 }
-                        }
-                    }
-                );
-            }
-
-            if (!String.IsNullOrEmpty(model.Email))
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                    new CustomField
-                    {
-                        Id = 54669,
-                        Values = new[] {
-                                        new CustomFieldValue{ Value = model.Email, Enum = 114621 }
-                                    }
-                    }
-                );
-            }
-
-            if (model.Birthday != DateTime.MinValue)
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                     new CustomField
-                     {
-                         Id = 565515,
-                         Values = new[] {
-                                        new CustomFieldValue{ Value = model.Birthday.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture), Enum = 114621 }
-                                    }
-                     }
-                );
-            }
-
-            if (!String.IsNullOrEmpty(model.City))
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                    new CustomField
-                    {
-                        Id = 72337,
-                        Values = new[] {
-                                        new CustomFieldValue{ Value = model.City }
-                                    }
-                    }
-                );
-            }
-
-            if (!String.IsNullOrEmpty(model.Subway))
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                    new CustomField
-                    {
-                        Id = 565525,
-                        Values = new[] {
-                                        new CustomFieldValue{ Value = model.Subway }
-                                    }
-                    }
-                );
-            }
-
-            if (!String.IsNullOrEmpty(model.Expirience))
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                        new CustomField
-                        {
-                            Id = 565519,
-                            Values = new[] {
-                                            new CustomFieldValue{ Value = model.Expirience }
-                                        }
-                        }
-                );
-            }
-
-            if (!String.IsNullOrEmpty(model.Education))
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                    new CustomField
-                    {
-                        Id = 565517,
-                        Values = new[] {
-                                        new CustomFieldValue{ Value = model.Education }
-                                    }
-                    }
-                );
-            }
-
-            if (model.ProgramPart != 0)
-            {
-                (contact.CustomFields as List<CustomField>).Add(
-                    new CustomField
-                    {
-                        Id = 565521,
-                        Values = new[] {
-                                        new CustomFieldValue{ Value = model.ProgramPart.ToString() }
-                                    }
-                    }
-                );
-            }
-
-            return contact;
+            return lead.Adapt<WizardDTO>(mapper);
         }
     }
 }

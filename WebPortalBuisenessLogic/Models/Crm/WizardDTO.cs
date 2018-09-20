@@ -4,10 +4,11 @@ using System.Text;
 
 namespace WebPortalBuisenessLogic.Models.Crm
 {
-    public class UpdateFormDTO
+    public class WizardDTO
     {
         public int LeadId { get; set; }
         public int Program { get; set; }
+
         public int ProgramPart { get; set; }
 
         public int ContactId { get; set; }
