@@ -19,32 +19,43 @@ using WebApiBusinessLogic.Models.Crm;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
-    public class UpdatePhone : DoCrmActionBase
+    public class UpdatePhone
     {
+        DataManager amocrm;
+
         TypeAdapterConfig mapper;
         ILogger logger;
 
-        public UpdatePhone(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
-            :base (amocrm, database)
+        public UpdatePhone(DataManager amocrm, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
         {
-            Events.Update += DoAction;
-            Events.Add += DoAction;
-
+            this.amocrm = amocrm;
             this.mapper = mapper;
             this.logger = logger;
+
+            Events.Update += DoAction;
+            Events.Add += DoAction;
         }
 
-        public async override void DoAction(object sender, CrmEvent e)
+        public async void DoAction(object sender, CrmEvent e)
         {
             if (e.Entity != "contacts" || String.IsNullOrEmpty(e.EntityId) || e.ContactType != "contact") return;
 
+            IEnumerable<ContactDTO> amoUser = null;
+            Contact contact = null;
+
             try
             {
-                var amoUser = amoManager.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId))
-                                .Execute();
+                amoUser = amocrm.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId)).Execute().Result;
+                contact = amoUser.FirstOrDefault()?.Adapt<Contact>(mapper);
+                logger.Error("Получен контакт - {@Contacts}", amoUser);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@Contacts}", e, amoUser);
+            }
 
-                var contact = amoUser.Result.Adapt<IEnumerable<Contact>>(mapper).FirstOrDefault();
-
+            if (contact != null)
+            {
                 foreach (var phone in contact.Phones())
                 {
                     if (!(phone.Value == phone.Value.LeaveJustDigits()))
@@ -52,13 +63,16 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         contact.Phones(phone.Key, phone.Value.LeaveJustDigits());
                     }
                 }
+            }
 
+            try
+            {
                 if (contact.ChangeValueDelegate != null)
                 {
                     var dto = contact.GetChanges().Adapt<ContactDTO>(mapper);
-                    await amoManager.Contacts.Update(dto);
+                    await amocrm.Contacts.Update(dto);
+                    logger.Error("Сохранены очищенные телефоны для пользователя {Name}, {Id}", contact.Name, contact.Id);
                 }
-
             }
             catch (Exception ex)
             {

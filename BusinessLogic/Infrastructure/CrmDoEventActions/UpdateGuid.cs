@@ -16,22 +16,26 @@ using System.Reflection;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
-    public class UpdateGuid : DoCrmActionBase
+    public class UpdateGuid
     {
+        DataManager amoManager;
+        UnitOfWork database;
+
         TypeAdapterConfig mapper;
         ILogger logger;
 
         public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
-            : base (amocrm, database)
         {
-            Events.Update += DoAction;
-            Events.Add += DoAction;
-
             this.mapper = mapper;
             this.logger = logger;
+            this.database = database;
+            this.amoManager = amocrm;
+
+            Events.Update += DoAction;
+            Events.Add += DoAction;
         }
 
-        public async override void DoAction(object sender, CrmEvent e)
+        public async void DoAction(object sender, CrmEvent e)
         {
             if (e.Entity != "contacts" || String.IsNullOrEmpty(e.EntityId) || e.ContactType != "contact") return;
 

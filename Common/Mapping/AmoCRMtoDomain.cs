@@ -14,8 +14,8 @@ namespace Common.Mapping
         {
             config.NewConfig<ContactDTO, Contact>()
                 .Ignore(dest => dest.ChangeValueDelegate)
-                .Map(dest => dest.Leads, src => src.Leads.IDs != null ? src.Leads.IDs.Select(c => new Lead { Id = c }) : null)
-                .Map(dest => dest.Company, src => src.Company.Id != null ? new Company { Id = src.Company.Id.Value } : null)
+                .Map(dest => dest.Leads, src => src.Leads != null ? src.Leads.IDs.Select(c => new Lead { Id = c }) : null)
+                .Map(dest => dest.Company, src => src.Company != null ? new Company { Id = src.Company.Id.Value } : null)
                 .Map(dest => dest.Fields, src => src.CustomFields != null ? src.CustomFields : null)
             ;
 

@@ -12,21 +12,25 @@ using WebApiBusinessLogic.Models.Crm;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
-    public class CreateUser : DoCrmActionBase
+    public class CreateUser 
     {
+        DataManager amoManager;
+        UnitOfWork database;
+
         TypeAdapterConfig mapper;
         ILogger logger;
 
         public CreateUser(DataManager amocrm, UnitOfWork service1C, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
-            : base(amocrm, service1C)
         {
-            Events.Status += DoAction;
-
             this.mapper = mapper;
             this.logger = logger;
+            this.amoManager = amocrm;
+            this.database = service1C;
+
+            Events.Status += DoAction;
         }
 
-        public async override void DoAction(object sender, CrmEvent e)
+        public async void DoAction(object sender, CrmEvent e)
         {
             if (e.Entity != "leads" || String.IsNullOrEmpty(e.EntityId)) return;
 
@@ -39,8 +43,6 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                 var queryContact = await amoManager.Contacts.Get().SetParam(i => i.Id = lead.MainContact.Id).Execute();
                 var contact = queryContact.FirstOrDefault().Adapt<Contact>(mapper);
-
-                var er = await userActions.Find(contact);
 
                 var lkl = await userActions.Create(contact);
             }
