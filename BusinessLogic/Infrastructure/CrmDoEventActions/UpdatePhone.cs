@@ -45,13 +45,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
             try
             {
-                amoUser = amocrm.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId)).Execute().Result;
-                contact = amoUser.FirstOrDefault()?.Adapt<Contact>(mapper);
-                logger.Error("Получен контакт - {@Contacts}", amoUser);
+                amoUser = await amocrm.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId)).Execute();
+                contact = amoUser.Adapt<IEnumerable<Contact>>(mapper).FirstOrDefault();
+                logger.Error("Получен контакт - {Name}, {Id}", amoUser.FirstOrDefault().Name, amoUser.FirstOrDefault().Id);
+            }
+            catch (NullReferenceException ex)
+            {
+                logger.Error(ex, "Ошибка в маппинге {@Contacts}, {@AmoUser}", contact, amoUser);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@Contacts}", e, amoUser);
+                logger.Error(ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@AmoUser}, {@Contacts}", e, amoUser, contact);
             }
 
             if (contact != null)
