@@ -49,7 +49,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                 if (!String.IsNullOrEmpty(hasGuid)) return;
 
-                var guid = await new LookForContact(database, logger).Find(contact);
+                var guid = await new LookForContactIn1C(database, logger).Find(contact);
 
                 if (!String.IsNullOrEmpty(guid))
                 {
@@ -59,7 +59,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         contact.GetChanges().Adapt<ContactDTO>(mapper)
                     );
 
-                    logger.Information("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, amoUser.Id);
+                    logger.Information("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, contact.Id);
                 }
 
             }

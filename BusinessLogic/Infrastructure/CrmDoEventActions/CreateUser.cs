@@ -34,6 +34,10 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         {
             if (e.Entity != "leads" || String.IsNullOrEmpty(e.EntityId)) return;
 
+            var incomingEvent = e.Events.FirstOrDefault();
+
+            if (!(incomingEvent.Event == "status" && incomingEvent.CurrentValue == "17793892")) return;
+
             var userActions = new Actions.User1C(database, logger);
 
             try

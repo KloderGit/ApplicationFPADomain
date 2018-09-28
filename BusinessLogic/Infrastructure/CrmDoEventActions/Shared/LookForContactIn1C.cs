@@ -15,14 +15,14 @@ using Task = System.Threading.Tasks.Task;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
 {
-    public class LookForContact
+    public class LookForContactIn1C
     {
         UnitOfWork database;
         ILogger logger;
 
         string guid;
 
-        public LookForContact(UnitOfWork database, ILogger logger)
+        public LookForContactIn1C(UnitOfWork database, ILogger logger)
         {
             this.database = database;
             this.logger = logger;

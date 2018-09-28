@@ -45,6 +45,8 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
                 BirthDay: DateTime.MinValue
             );
 
+            logger.Information("Создано Фл в 1С - {@Contact}", contact);
+
             if (query != null) result = query.GUID;
 
             return result;

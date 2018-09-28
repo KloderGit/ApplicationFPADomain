@@ -23,6 +23,7 @@ using WebApiBusinessLogic.Infrastructure.CrmDoEventActions;
 using WebApiBusinessLogic.Models.Crm;
 using WebApiBusinessLogic.Utils.Mapster;
 using ServiceLibraryNeoClient.Implements;
+using Common.Extensions;
 
 namespace WebApiBusinessLogic
 {
@@ -138,6 +139,15 @@ namespace WebApiBusinessLogic
         //    return result.Update;
         //}
 
+
+
+        public bool LookForAmoUser(string phone, string email)
+        {
+            var user = amocrm.Contacts.Get().SetParam(x => x.Phone = phone.LeaveJustDigits()).Execute().Result;
+            var user2 = amocrm.Contacts.Get().SetParam(x => x.Query = email.ClearEmail()).Execute().Result;
+
+            return true;
+        }
 
     }
 }
