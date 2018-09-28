@@ -22,16 +22,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
 
         string guid;
 
-            public LookForContact(UnitOfWork database, ILogger logger)
-            {
-                this.database = database;
-                this.logger = logger;
-            }
+        public LookForContact(UnitOfWork database, ILogger logger)
+        {
+            this.database = database;
+            this.logger = logger;
+        }
 
         public async Task<string> Find(Contact contact)
         {
-            await FindByPhones(contact.Phones().Select(x=>x.Value));
-            await FindByEmails(contact.Email().Select(x => x.Value));
+            if(contact.Phones() != null) await FindByPhones(contact.Phones().Select(x=>x.Value));
+
+            if(contact.Email() != null) await FindByEmails(contact.Email().Select(x => x.Value));
 
             return guid;
         }
@@ -72,7 +73,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
                     Metod = MethodBase.GetCurrentMethod().Name
                 };
 
-                logger.Error("Ошибка, {@Message}, По адресу - {@Location}", ex.Message, info);
+                logger.Error(ex, "Ошибка по адресу - {@Location}", info);
             }
 
             return query?.GUID;

@@ -27,5 +27,15 @@ namespace Domain.Models.Crm
 
             return contactWithChangedFields;
         }
+
+        public void SetGuid(string value)
+        {
+            Fields = Fields ?? new List<Field>();
+            if (!Fields.Any(x => x.Id == 571611)) Fields.Add( new Field { Id = 571611 } );
+
+            Fields.FirstOrDefault(x => x.Id == 571611).Values = new List<FieldValue> { new FieldValue { Value = value } };
+        }
+
+
     }
 }

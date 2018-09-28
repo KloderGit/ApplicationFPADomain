@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using WebApiBusinessLogic.Infrastructure.CrmDoEventActions;
 using WebApiBusinessLogic.Models.Crm;
 using WebApiBusinessLogic.Utils.Mapster;
+using ServiceLibraryNeoClient.Implements;
 
 namespace WebApiBusinessLogic
 {
@@ -30,45 +31,35 @@ namespace WebApiBusinessLogic
         ILogger logger;
         TypeAdapterConfig mapper;
 
-        DataManager amocrm;
+        LibraryAmoCRM.DataManager amocrm;
         UnitOfWork database;
-
-        Lazy<ServiceLibraryNeoClient.Implements.DataManager> neo;
+        ServiceLibraryNeoClient.Implements.DataManager neodatabase;
 
         CrmEventTypes eventsType = new CrmEventTypes();
 
         UpdateGuid updGuid;
         UpdatePhone updPhone;
-
         CreateUser CreateUser;
 
-
-        public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping)
+        public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping,
+            LibraryAmoCRM.DataManager amoManager, UnitOfWork service1C)
         {
-            this.logger = logger;
-            this.mapper = mapping;
+            this.logger = logger;   // Логи
+
+            this.mapper = mapping;  // Maps
                 new RegisterMaps(mapper);
 
+            this.amocrm = amoManager;   // Amo
+            this.database = service1C;  // 1C
 
-            var amoAccount = configuration.GetSection("providers:0:AmoCRM:connection:account:name").Value;
-            var amoUser = configuration.GetSection("providers:0:AmoCRM:connection:account:email").Value;
-            var amoPass = configuration.GetSection("providers:0:AmoCRM:connection:account:hash").Value;
+            //neodatabase = neo;  // neo
 
-            var user1C = configuration.GetSection("providers:1:1C:connection:account:user").Value;
-            var pass1C = configuration.GetSection("providers:1:1C:connection:account:pass").Value;
-
-            this.amocrm = new DataManager(amoAccount, amoUser, amoPass);
-
-            this.database = new UnitOfWork(user1C, pass1C);
-
-            neo = new Lazy<ServiceLibraryNeoClient.Implements.DataManager>();
-
-
-            //updGuid = new UpdateGuid(amocrm, database, eventsType, mapper, logger);
+            // Events
+            updGuid = new UpdateGuid(amocrm, database, eventsType, mapper, logger);
             updPhone = new UpdatePhone(amocrm, eventsType, mapper, logger);
             //CreateUser = new CreateUser(amocrm, database, eventsType, mapper, logger);
 
-            new RegisterMapsterConfig();
+            //new RegisterMapsterConfig();
 
         }
 

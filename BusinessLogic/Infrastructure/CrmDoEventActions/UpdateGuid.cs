@@ -41,12 +41,9 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
             try
             {
-                var amoUser = amoManager.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId))
-                                .Execute()
-                                    .Result
-                                    .FirstOrDefault();
+                var amoUser = await amoManager.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId)).Execute();
 
-                var contact = amoUser.Adapt<Contact>(mapper);
+                var contact = amoUser.FirstOrDefault().Adapt<Contact>(mapper);
 
                 var hasGuid = contact.Guid();
 
@@ -73,7 +70,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     Metod = MethodBase.GetCurrentMethod().Name
                 };
 
-                logger.Error("Ошибка, {@Message}, По адресу - {@Location}", ex.Message, info);
+                logger.Error(ex, "Ошибка по адресу - {@Location}", info);
             }
         }
     }

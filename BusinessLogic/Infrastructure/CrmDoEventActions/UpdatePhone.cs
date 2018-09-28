@@ -47,15 +47,14 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             {
                 amoUser = await amocrm.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId)).Execute();
                 contact = amoUser.Adapt<IEnumerable<Contact>>(mapper).FirstOrDefault();
-                logger.Error("Получен контакт - {Name}, {Id}", amoUser.FirstOrDefault().Name, amoUser.FirstOrDefault().Id);
             }
             catch (NullReferenceException ex)
             {
-                logger.Error(ex, "Ошибка в маппинге {@Contacts}, {@AmoUser}", contact, amoUser);
+                logger.Error(ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@AmoUser}, {@Contacts}", e, amoUser, contact);
+                logger.Error(ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@AmoUser}", e, amoUser, contact);
             }
 
             if (contact != null)
@@ -75,7 +74,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 {
                     var dto = contact.GetChanges().Adapt<ContactDTO>(mapper);
                     await amocrm.Contacts.Update(dto);
-                    logger.Error("Сохранены очищенные телефоны для пользователя {Name}, {Id}", contact.Name, contact.Id);
+                    logger.Information("Обновление Phone для пользователя Id - {User}", contact.Id);
                 }
             }
             catch (Exception ex)
@@ -85,7 +84,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     Metod = MethodBase.GetCurrentMethod().Name
                 };
 
-                logger.Error("Ошибка, {@Message}, {@Location}", ex.Message, info);
+                logger.Error(ex, "Ошибка, {@Location}",info);
             }
 
         }
