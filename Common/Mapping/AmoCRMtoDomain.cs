@@ -1,5 +1,6 @@
 ﻿using Domain.Models.Crm;
 using LibraryAmoCRM.Models;
+using LibraryAmoCRM.Models.Fields;
 using Mapster;
 using System;
 using System.Collections.Generic;
@@ -39,6 +40,15 @@ namespace Common.Mapping
                 .Map(dest => dest.Fields, src => src.CustomFields ?? null)
             ;
 
+            config.NewConfig<Lead, LeadDTO>()
+                .Map(dest => dest.Company, src => src.Company != null ? new CompanyField { Id = (int)src.Company.Id } : null)
+                .Map(dest => dest.Contacts, src => src.Contacts)
+                .Map(dest => dest.MainContact, src => src.MainContact != null ? new MainContactField { Id = (int)src.MainContact.Id } : null)
+                .Map(dest => dest.CustomFields, src => src.Fields ?? null)
+            ;
+            config.NewConfig<List<Contact>, ContactsField>()
+                .Map(dest => dest.IDs, src => src.Select(x => x.Id))
+            ;
         }
     }
 }

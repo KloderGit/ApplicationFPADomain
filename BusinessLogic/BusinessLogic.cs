@@ -23,6 +23,11 @@ using WebApiBusinessLogic.Infrastructure.CrmDoEventActions;
 using WebApiBusinessLogic.Models.Crm;
 using WebApiBusinessLogic.Utils.Mapster;
 using ServiceLibraryNeoClient.Implements;
+using Common.Extensions;
+using WebApiBusinessLogic.Infrastructure.Actions;
+using WebApiBusinessLogic.Models.Site;
+using Common.DTO.Service1C;
+using WebApiBusinessLogic.Infrastructure.Helpers;
 
 namespace WebApiBusinessLogic
 {
@@ -116,7 +121,7 @@ namespace WebApiBusinessLogic
         public async Task<IEnumerable<LeadDTO>> GetLeadsByStatus(int status)
         {
             var sd = new LeadDTO();
-            sd.ResponsibleUserId = (int)Users.Анастасия_Столовая;
+            sd.ResponsibleUserId = (int)ResponsibleUserEnum.Анастасия_Столовая;
 
             return await amocrm.Leads.Get().SetParam(x => x.Status = status).Execute();
         }
@@ -138,6 +143,131 @@ namespace WebApiBusinessLogic
         //    return result.Update;
         //}
 
+
+
+        public  bool LookForAmoUser(IEnumerable<string> phone, string email)
+        {
+            //var user = amocrm.Contacts.Get().SetParam(x => x.Phone = phone.LeaveJustDigits()).Execute().Result;
+            //var user2 = amocrm.Contacts.Get().SetParam(x => x.Query = email.ClearEmail()).Execute().Result;
+
+            var userAction = new UserAmoCRM(amocrm, mapper, logger);
+
+            var contactGuid = userAction.FindContact(phone).Result;
+
+            var lead = amocrm.Leads.Get().SetParam(p => p.Query = contactGuid.Name).Execute().Result;
+
+            return true;
+        }
+
+
+        public async Task<bool> CreateLeadFormSite(SignUpForEvent item)
+        {
+            var userAction = new UserAmoCRM(amocrm, mapper, logger);
+
+            Contact contact = null;
+
+            try
+            {
+                contact = userAction.FindContact(item.ContactPhones).Result;
+                if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
+            }
+            catch (Exception ex)
+            { }
+
+            Lead lead = null;
+
+            if (contact != null)
+            {
+                try
+                {
+                    var query = await amocrm.Leads.Get().SetParam(p => p.Query = contact.Name).Execute();
+                    var result = query.Adapt<IEnumerable<Lead>>(mapper);
+                    var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
+                    lead = userLeads.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
+                }
+                catch (Exception ex)
+                { }
+            }
+
+            var types1 = amocrm.Account.Embedded.CustomFields.Leads[66349].Enums;
+            var types2 = amocrm.Account.Embedded.CustomFields.Leads[227457].Enums;
+            var types = types2.Union(types1).ToDictionary(pair => pair.Key, pair => pair.Value);
+
+            FormDTOBuilder builder = new FormDTOBuilder(contact, lead);
+
+            try
+            {
+                builder.ContactName(item.ContactName)
+                    .Phone(item.ContactPhones)
+                    .Email(item.ContactEmails)
+                    .City(item.ContactCity)
+                    .LeadName(types, item.EventType, item.LeadName)
+                    .EducationType(item.LeadType)
+                    .Price(item.LeadPrice)
+                    .DateOfEvent(item.LeadDate)
+                    .LeadGuid(item.LeadGuid);
+            }
+            catch (Exception ex)
+            { }
+
+            contact = (Contact)builder;
+            lead = (Lead)builder;
+
+            try
+            {
+                if (contact.Id != 0 & lead.Id !=0 )
+                {
+                    var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+
+                    var task = new TaskDTO()
+                    {
+                        ElementId = lead.Id,
+                        ElementType = (int)ElementTypeEnum.Сделка,
+                        CompleteTillAt = DateTime.Today,
+                        TaskType = 965749,
+                        Text = @"Пользователь оставил повторную заявку на это мероприятие. Проверить на дубли."
+                    };
+
+                    var queryCreateTask = await amocrm.Tasks.Add(task);
+
+                    return true;
+                }
+            }
+            catch(Exception ex)
+            { }
+
+
+            try
+            {
+                if (contact.Id != 0 & lead.Id == 0)
+                {
+                    ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = ((Contact)builder).Id } };
+                    var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            { }
+
+            try
+            {
+                if (contact.Id == 0 & lead.Id == 0)
+                {
+                    var queryCreateContact = await amocrm.Contacts.Add(((Contact)builder).Adapt<ContactDTO>(mapper));
+
+                    ((Lead)builder).MainContact = new Contact { Id = queryCreateContact.Id.Value };
+
+                    var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            { }
+
+            return false;
+        }
 
     }
 }
