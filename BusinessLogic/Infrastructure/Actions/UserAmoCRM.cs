@@ -65,7 +65,7 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
             {
                 query.SetParam(i=>i.Query = param);
             }
-
+            
             var result = await query.Execute();
 
             return result?.FirstOrDefault().Adapt<Contact>(mapper);

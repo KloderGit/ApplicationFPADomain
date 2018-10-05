@@ -160,33 +160,23 @@ namespace WebApiBusinessLogic
         }
 
 
-        public async Task<bool> CreateLeadFormSite(SignUpForEvent item)
+        public async Task<int> CreateLeadFormSite(SignUpForEvent item)
         {
             var userAction = new UserAmoCRM(amocrm, mapper, logger);
 
             Contact contact = null;
 
-            try
-            {
-                contact = userAction.FindContact(item.ContactPhones).Result;
+            contact = userAction.FindContact(item.ContactPhones).Result;
                 if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
-            }
-            catch (Exception ex)
-            { }
 
             Lead lead = null;
 
             if (contact != null)
             {
-                try
-                {
-                    var query = await amocrm.Leads.Get().SetParam(p => p.Query = contact.Name).Execute();
-                    var result = query.Adapt<IEnumerable<Lead>>(mapper);
-                    var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
-                    lead = userLeads.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
-                }
-                catch (Exception ex)
-                { }
+                var query = await amocrm.Leads.Get().SetParam(p => p.Query = contact.Name).Execute();
+                var result = query.Adapt<IEnumerable<Lead>>(mapper);
+                var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
+                lead = userLeads?.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
             }
 
             var types1 = amocrm.Account.Embedded.CustomFields.Leads[66349].Enums;
@@ -208,65 +198,54 @@ namespace WebApiBusinessLogic
                     .LeadGuid(item.LeadGuid);
             }
             catch (Exception ex)
-            { }
+            {
+                logger.Error(ex, "Ошибка при преобразовании запроса с сайта в Модели BL");
+                throw new ArgumentException();
+            }
 
             contact = (Contact)builder;
             lead = (Lead)builder;
 
-            try
+
+            if (contact.Id != 0 & lead.Id !=0 )
             {
-                if (contact.Id != 0 & lead.Id !=0 )
+                var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+
+                var task = new TaskDTO()
                 {
-                    var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+                    ElementId = queryCreateLead == null ? lead.Id : queryCreateLead.Id,
+                    ElementType = (int)ElementTypeEnum.Сделка,
+                    CompleteTillAt = DateTime.Today,
+                    TaskType = 965749,
+                    Text = @"Пользователь оставил повторную заявку на это мероприятие. Проверить на дубли."
+                };
 
-                    var task = new TaskDTO()
-                    {
-                        ElementId = lead.Id,
-                        ElementType = (int)ElementTypeEnum.Сделка,
-                        CompleteTillAt = DateTime.Today,
-                        TaskType = 965749,
-                        Text = @"Пользователь оставил повторную заявку на это мероприятие. Проверить на дубли."
-                    };
+                var queryCreateTask = await amocrm.Tasks.Add(task);
 
-                    var queryCreateTask = await amocrm.Tasks.Add(task);
-
-                    return true;
-                }
+                return queryCreateLead.Id.Value;
             }
-            catch(Exception ex)
-            { }
 
 
-            try
+            if (contact.Id != 0 & lead.Id == 0)
             {
-                if (contact.Id != 0 & lead.Id == 0)
-                {
-                    ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = ((Contact)builder).Id } };
-                    var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+                ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = ((Contact)builder).Id } };
+                var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
 
-                    return true;
-                }
+                return queryCreateLead.Id.Value;
             }
-            catch (Exception ex)
-            { }
 
-            try
+            if (contact.Id == 0 & lead.Id == 0)
             {
-                if (contact.Id == 0 & lead.Id == 0)
-                {
-                    var queryCreateContact = await amocrm.Contacts.Add(((Contact)builder).Adapt<ContactDTO>(mapper));
+               var queryCreateContact = await amocrm.Contacts.Add(((Contact)builder).Adapt<ContactDTO>(mapper));
 
-                    ((Lead)builder).MainContact = new Contact { Id = queryCreateContact.Id.Value };
+               ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = queryCreateContact.Id.Value } };
 
-                    var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+               var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
 
-                    return true;
-                }
+               return queryCreateLead.Id.Value;
             }
-            catch (Exception ex)
-            { }
 
-            return false;
+            return 0;
         }
 
     }

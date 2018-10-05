@@ -59,7 +59,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         contact.GetChanges().Adapt<ContactDTO>(mapper)
                     );
 
-                    logger.Information("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, amoUser.Id);
+                    logger.Information("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, contact.Id);
                 }
 
             }
