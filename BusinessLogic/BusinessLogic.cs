@@ -2,32 +2,22 @@
 using Common.Mapping;
 using Domain.Models.Crm;
 using Library1C;
-using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
-using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Serilog;
-using ServiceLibraryNeoClient.DTO;
-using ServiceLibraryNeoClient.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using WebApiBusinessLogic.Infrastructure.CrmDoEventActions;
-using WebApiBusinessLogic.Models.Crm;
-using WebApiBusinessLogic.Utils.Mapster;
-using ServiceLibraryNeoClient.Implements;
-using Common.Extensions;
 using WebApiBusinessLogic.Infrastructure.Actions;
-using WebApiBusinessLogic.Models.Site;
-using Common.DTO.Service1C;
+using WebApiBusinessLogic.Infrastructure.CrmDoEventActions;
 using WebApiBusinessLogic.Infrastructure.Helpers;
+using WebApiBusinessLogic.Models.Crm;
+using WebApiBusinessLogic.Models.Site;
 
 namespace WebApiBusinessLogic
 {
@@ -104,7 +94,6 @@ namespace WebApiBusinessLogic
         {
             //var programs = neo.Value.Programs.GetList().Where( x => x.Type == "Программа обучения").Where( x=>x.Active );
 
-
             var cont = amocrm.Contacts.Get().SetParam(x => x.Phone = "9031453412").Execute().Result;
 
             var ertert = cont.FirstOrDefault().Adapt<Contact>(mapper);
@@ -162,29 +151,13 @@ namespace WebApiBusinessLogic
 
         public async Task<int> CreateLeadFormSite(SignUpForEvent item)
         {
-            var userAction = new UserAmoCRM(amocrm, mapper, logger);
-
+            // Prepare
             Contact contact = null;
-
-            contact = userAction.FindContact(item.ContactPhones).Result;
-                if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
-
             Lead lead = null;
-
-            if (contact != null)
-            {
-                var query = await amocrm.Leads.Get().SetParam(p => p.Query = contact.Name).Execute();
-                var result = query.Adapt<IEnumerable<Lead>>(mapper);
-                var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
-                lead = userLeads?.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
-            }
-
+            FormDTOBuilder builder = new FormDTOBuilder(contact, lead);
             var types1 = amocrm.Account.Embedded.CustomFields.Leads[66349].Enums;
             var types2 = amocrm.Account.Embedded.CustomFields.Leads[227457].Enums;
             var types = types2.Union(types1).ToDictionary(pair => pair.Key, pair => pair.Value);
-
-            FormDTOBuilder builder = new FormDTOBuilder(contact, lead);
-
             try
             {
                 builder.ContactName(item.ContactName)
@@ -199,53 +172,55 @@ namespace WebApiBusinessLogic
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Ошибка при преобразовании запроса с сайта в Модели BL");
+                logger.Error(ex, "Ошибка при преобразовании запроса с сайта в Модели BL. Данные запроса {@Form}", item);
                 throw new ArgumentException();
             }
 
-            contact = (Contact)builder;
-            lead = (Lead)builder;
 
+            // LookFor or Create Contact
+            var userAction = new UserAmoCRM(amocrm, mapper, logger);            
+            contact = userAction.FindContact(item.ContactPhones).Result;
+                if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
 
-            if (contact.Id != 0 & lead.Id !=0 )
+            if (contact == null) {
+                try
+                {
+                    Contact cont = builder;
+                    var queryCreateContact = await amocrm.Contacts.Add(cont.Adapt<ContactDTO>(mapper));
+                    var queryGetContact = await amocrm.Contacts.Get().SetParam(i => i.Id = queryCreateContact.Id.Value).Execute();
+                    contact = queryGetContact.FirstOrDefault().Adapt<Contact>(mapper);
+                }
+                catch (Exception ex) {
+                    throw new ArgumentNullException();
+                }
+            }
+
+            // LookFor Lead
+            var query = await amocrm.Leads.Get().SetParam(p => p.Query = contact.Name).Execute();
+            var result = query?.Adapt<IEnumerable<Lead>>(mapper);
+            var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
+            lead = userLeads?.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
+
+            // Create Lead
+            ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = contact.Id } };
+            var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+
+            // Add Task
+            if (lead != null)
             {
-                var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
-
                 var task = new TaskDTO()
                 {
-                    ElementId = queryCreateLead == null ? lead.Id : queryCreateLead.Id,
+                    ElementId = queryCreateLead.Id,
                     ElementType = (int)ElementTypeEnum.Сделка,
                     CompleteTillAt = DateTime.Today,
                     TaskType = 965749,
-                    Text = @"Пользователь оставил повторную заявку на это мероприятие. Проверить на дубли."
+                    Text = @"Существует похожая заявка у этого пользователя. Проверить на дубли."
                 };
 
                 var queryCreateTask = await amocrm.Tasks.Add(task);
-
-                return queryCreateLead.Id.Value;
             }
 
-
-            if (contact.Id != 0 & lead.Id == 0)
-            {
-                ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = ((Contact)builder).Id } };
-                var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
-
-                return queryCreateLead.Id.Value;
-            }
-
-            if (contact.Id == 0 & lead.Id == 0)
-            {
-               var queryCreateContact = await amocrm.Contacts.Add(((Contact)builder).Adapt<ContactDTO>(mapper));
-
-               ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = queryCreateContact.Id.Value } };
-
-               var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
-
-               return queryCreateLead.Id.Value;
-            }
-
-            return 0;
+            return queryCreateLead.Id.Value;
         }
 
     }

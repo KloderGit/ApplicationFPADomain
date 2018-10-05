@@ -33,6 +33,10 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         public async void DoAction(object sender, CrmEvent e)
         {
             if (e.Entity != "leads" || String.IsNullOrEmpty(e.EntityId)) return;
+            var @event = e.Events.FirstOrDefault();
+            if (@event.Event != "status" &&
+                (@event.CurrentValue != "142" || @event.CurrentValue != "17793892")) return;
+
 
             var userActions = new Actions.User1C(database, logger);
 
