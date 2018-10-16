@@ -192,7 +192,24 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
             try
             {
-                var result = await userActions3.SendLead(dto);
+                var result = await userActions3.SendLead( dto );
+
+                var note = new NoteDTO()
+                {
+                    ElementId = lead.Id,
+                    ElementType = (int)ElementTypeEnum.Сделка,
+                    NoteType = 25,
+                    Params = new NoteParams
+                    {
+                        Text = "Сделка успешно отправлена в 1С.",
+                        Service = "WebApi | "
+                    }
+                };
+
+                var queryCreateTask = await amoManager.NotesLead.Add( note );
+
+                logger.Information( "Сделка успешно отправлена в 1С. Мероприятие - {Event} {Id} | Контакт - {Name} {Id}", lead.Name, lead.Id, contact.Name, contact.Id );
+
             }
             catch (ArgumentException ex)
             {
@@ -204,9 +221,13 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     Text = "Ошибка ошибка отправки сделки в 1С. Проверьте поля данных или зачислите вручную."
                 };
 
-                var queryCreateTask = await amoManager.NotesLead.Add(exceptionNote);
+                var queryCreateTask = await amoManager.NotesLead.Add( exceptionNote );
 
-                logger.Warning(ex, "Ошибка отправки сделки в 1С");
+                logger.Warning( ex, "Ошибка отправки сделки в 1С" );
+            }
+            catch (Exception ex)
+            {
+                logger.Warning(ex, "Ошибка ошибка отправки сделки в 1С" );
             }
         }
 

@@ -33,7 +33,7 @@ namespace Common.DTO.Service1C
         public IEnumerable<ValidationResult> GetValidateErrors()
         {
             var validateModelResults = new List<ValidationResult>();
-            var context = new ValidationContext(validateModelResults);
+            var context = new ValidationContext(this);
             if (!Validator.TryValidateObject(this, context, validateModelResults, true))
             {
                 return validateModelResults;
