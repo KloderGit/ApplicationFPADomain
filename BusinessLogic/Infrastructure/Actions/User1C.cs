@@ -1,13 +1,17 @@
-﻿using Common.Extensions;
+﻿using Common.DTO.Service1C;
+using Common.Extensions;
 using Common.Extensions.Models.Crm;
+using Common.Interfaces;
 using Common.Logging;
 using Domain.Models.Crm;
 using Library1C;
+using Library1C.DTO;
 using Mapster;
 using Serilog;
 using ServiceReference1C;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -18,37 +22,47 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
 {
     public class User1C
     {
-        ILogger logger;
+        ILoggerService logger;
         UnitOfWork database;
+        TypeAdapterConfig mapper;
 
-        public User1C(UnitOfWork database, ILogger logger)
+        public User1C(UnitOfWork database, ILoggerService logger, TypeAdapterConfig mapper)
         {
             this.logger = logger;
             this.database = database;
+            this.mapper = mapper;
         }
+
+
 
         public async Task<string> Create(Contact contact)
         {
-            string result = String.Empty;
+            var dto1CContact = new SendPersonTo1CDTO();
+            dto1CContact = contact.Adapt<SendPersonTo1CDTO>(mapper);
 
-            if (String.IsNullOrEmpty(contact.Name)) throw new ArgumentNullException("Отсутствует обязательное поля Name");
+            if (dto1CContact.isValid == false) throw new ArgumentException(String.Join(" | ", dto1CContact.GetValidateErrors()));
 
-            var query = await database.Persons.Add( 
-                FIO: contact.Name,
-                Phone: contact.Phones()?.FirstOrDefault().Value.LeaveJustDigits(),
-                Email: contact.Email()?.FirstOrDefault().Value.ClearEmail(),
-                City: contact.City(),
-                Address: contact.Location(),
-                Education: contact.Education(),
-                Expirience: contact.Experience(),
-                Position: contact.Position(),
-                BirthDay: DateTime.MinValue
-            );
+            var guid = await database.Persons.Add2(dto1CContact.Adapt<AddPersonDTO>(mapper));
 
-            if (query != null) result = query.GUID;
-
-            return result;
+            return String.IsNullOrEmpty(guid) ? null : guid;
         }
+
+
+        public async Task<string> SendLead(SendLeadto1CDTo lead)
+        {
+            var dto1CLead = new SendLeadto1CDTo();
+            dto1CLead = lead.Adapt<SendLeadto1CDTo>(mapper);
+
+            if (dto1CLead.isValid == false) throw new ArgumentException(String.Join(" | ", dto1CLead.GetValidateErrors()));
+
+            var result = await database.Persons.InviteTo1C(dto1CLead.Adapt<AddLeadDTO>(mapper));
+
+            if (result != "Студент зачислен") throw new ArgumentException();
+
+            return String.IsNullOrEmpty(result) ? null : result;
+        }
+
+
 
         public async Task<string> Find(Contact contact)
         {

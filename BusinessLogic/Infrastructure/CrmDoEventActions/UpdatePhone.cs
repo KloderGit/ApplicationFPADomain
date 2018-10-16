@@ -1,6 +1,7 @@
 ﻿using Common.Configuration.Crm;
 using Common.Extensions;
 using Common.Extensions.Models.Crm;
+using Common.Interfaces;
 using Common.Logging;
 using Domain.Models.Crm;
 using Library1C;
@@ -24,9 +25,9 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         DataManager amocrm;
 
         TypeAdapterConfig mapper;
-        ILogger logger;
+        ILoggerService logger;
 
-        public UpdatePhone(DataManager amocrm, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
+        public UpdatePhone(DataManager amocrm, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.amocrm = amocrm;
             this.mapper = mapper;

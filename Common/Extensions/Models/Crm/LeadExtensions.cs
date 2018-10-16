@@ -51,7 +51,7 @@ namespace Common.Extensions.Models.Crm
 
         public static DateTime? SeminarDate(this Lead lead)
         {
-            return lead.Fields.FirstOrDefault(x => x.Id == (int)LeadFieldsEnum.SeminarDate)?.Values.FirstOrDefault().Value.ToDateTime(dateSpliter: '/');
+            return lead.Fields?.FirstOrDefault(x => x.Id == (int)LeadFieldsEnum.SeminarDate)?.Values.FirstOrDefault().Value.ToDateTime(dateSpliter: '-');
         }
 
         public static void SeminarDate(this Lead lead, DateTime value)

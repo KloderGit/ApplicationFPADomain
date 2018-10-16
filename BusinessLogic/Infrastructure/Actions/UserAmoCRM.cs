@@ -1,5 +1,6 @@
 ﻿using Common.Extensions;
 using Common.Extensions.Models.Crm;
+using Common.Interfaces;
 using Domain.Models.Crm;
 using LibraryAmoCRM;
 using LibraryAmoCRM.Infarstructure.QueryParams;
@@ -16,11 +17,11 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
 {
     public class UserAmoCRM
     {
-        ILogger logger;
+        ILoggerService logger;
         DataManager amoManager;
         TypeAdapterConfig mapper;
 
-        public UserAmoCRM(DataManager amoManager, TypeAdapterConfig mapper,  ILogger logger)
+        public UserAmoCRM(DataManager amoManager, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.logger = logger;
             this.amoManager = amoManager;

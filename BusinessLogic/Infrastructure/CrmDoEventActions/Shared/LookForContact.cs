@@ -1,5 +1,6 @@
 ﻿using Common.Extensions;
 using Common.Extensions.Models.Crm;
+using Common.Interfaces;
 using Common.Logging;
 using Domain.Models.Crm;
 using Library1C;
@@ -18,11 +19,11 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
     public class LookForContact
     {
         UnitOfWork database;
-        ILogger logger;
+        ILoggerService logger;
 
         string guid;
 
-        public LookForContact(UnitOfWork database, ILogger logger)
+        public LookForContact(UnitOfWork database, ILoggerService logger)
         {
             this.database = database;
             this.logger = logger;

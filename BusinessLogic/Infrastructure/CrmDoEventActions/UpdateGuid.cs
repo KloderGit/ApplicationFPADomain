@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Domain.Models.Crm;
 using Common.Logging;
 using System.Reflection;
+using Common.Interfaces;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
@@ -22,9 +23,9 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         UnitOfWork database;
 
         TypeAdapterConfig mapper;
-        ILogger logger;
+        ILoggerService logger;
 
-        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILogger logger)
+        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.mapper = mapper;
             this.logger = logger;

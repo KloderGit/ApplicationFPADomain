@@ -97,7 +97,7 @@ namespace WebApiBusinessLogic.Infrastructure.Helpers
                 if (this.lead.Name.Length > value.Length) name = this.lead.Name;
             }
 
-            this.lead.Name = name;
+            this.lead.Name = "[ TEST ] " + name;
 
             var leadEvent = leadEvents.FirstOrDefault(i => i.Value.ToUpper().Trim() == value.ToUpper().Trim());
 
@@ -199,8 +199,11 @@ namespace WebApiBusinessLogic.Infrastructure.Helpers
     {
         Default = (int)ResponsibleUserEnum.Анастасия_Столовая,
         ОТКРЫТОЕ = (int)ResponsibleUserEnum.Ирина_Моисеева,
+        ОТКРЫТАЯ = (int)ResponsibleUserEnum.Ирина_Моисеева,
         КОРПОРАТИВНОЕ = (int)ResponsibleUserEnum.Лина_Серрие,
+        КОРПОРАТИВНАЯ = (int)ResponsibleUserEnum.Лина_Серрие,
         ОЧНОЕ = (int)ResponsibleUserEnum.Лина_Серрие,
+        ОЧНАЯ = (int)ResponsibleUserEnum.Лина_Серрие,
         ДИСТАНЦИОННАЯ = (int)ResponsibleUserEnum.Ксения_Харымова,
     }
 
@@ -208,6 +211,7 @@ namespace WebApiBusinessLogic.Infrastructure.Helpers
     {
         Default = 18664336,
         ОТКРЫТОЕ = 17769205,
+        ОТКРЫТАЯ = 17769205,
         КОРПОРАТИВНОЕ = 17793877,
         ОЧНОЕ = 17793886,
         ДИСТАНЦИОННАЯ = 18855163,

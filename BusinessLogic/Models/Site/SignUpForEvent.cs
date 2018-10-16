@@ -16,5 +16,7 @@ namespace WebApiBusinessLogic.Models.Site
         public string EventType { get; set; }
         public int LeadPrice { get; set; }
         public string LeadGuid { get; set; }
+
+        public string RequestUrl { get; set; }
     }
 }

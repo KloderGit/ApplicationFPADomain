@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.Models.Crm;
+using Common.Interfaces;
 using Common.Mapping;
 using Domain.Models.Crm;
 using Library1C;
@@ -7,6 +8,8 @@ using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -23,7 +26,7 @@ namespace WebApiBusinessLogic
 {
     public class BusinessLogic
     {
-        ILogger logger;
+        ILoggerService logger;
         TypeAdapterConfig mapper;
 
         LibraryAmoCRM.DataManager amocrm;
@@ -34,9 +37,9 @@ namespace WebApiBusinessLogic
 
         UpdateGuid updGuid;
         UpdatePhone updPhone;
-        CreateUser CreateUser;
+        SendLeadTo1CEvent sendLead;
 
-        public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping,
+        public BusinessLogic(ILoggerService logger, IConfiguration configuration, TypeAdapterConfig mapping,
             LibraryAmoCRM.DataManager amoManager, UnitOfWork service1C)
         {
             this.logger = logger;   // Логи
@@ -52,7 +55,7 @@ namespace WebApiBusinessLogic
             // Events
             updGuid = new UpdateGuid(amocrm, database, eventsType, mapper, logger);
             updPhone = new UpdatePhone(amocrm, eventsType, mapper, logger);
-            //CreateUser = new CreateUser(amocrm, database, eventsType, mapper, logger);
+            sendLead = new SendLeadTo1CEvent(amocrm, database, eventsType, mapper, logger);
 
             //new RegisterMapsterConfig();
 
@@ -155,6 +158,11 @@ namespace WebApiBusinessLogic
             Contact contact = null;
             Lead lead = null;
             FormDTOBuilder builder = new FormDTOBuilder(contact, lead);
+
+            //var prgms = await amocrm.Catalogs.Get().SetParam(i => i.Catalog = Catalogs.Programs).Execute();
+
+            //var program = prgms?.FirstOrDefault(el => el.CustomFields.FirstOrDefault(id=>id.Id == 268359).Values.FirstOrDefault().Value == item.LeadGuid);
+
             var types1 = amocrm.Account.Embedded.CustomFields.Leads[66349].Enums;
             var types2 = amocrm.Account.Embedded.CustomFields.Leads[227457].Enums;
             var types = types2.Union(types1).ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -205,23 +213,40 @@ namespace WebApiBusinessLogic
             ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = contact.Id } };
             var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
 
-            // Add Task
-            if (lead != null)
+            var note = new NoteDTO()
             {
-                var task = new TaskDTO()
-                {
-                    ElementId = queryCreateLead.Id,
-                    ElementType = (int)ElementTypeEnum.Сделка,
-                    CompleteTillAt = DateTime.Today,
-                    TaskType = 965749,
-                    Text = @"Существует похожая заявка у этого пользователя. Проверить на дубли."
-                };
+                ElementId = queryCreateLead.Id,
+                ElementType = (int)ElementTypeEnum.Сделка,
+                NoteType = 25,
+                Params = new NoteParams {
+                    Text = "Адрес отправки запроса: " + item.RequestUrl,
+                    Service = "WebApi | "
+                }
+            };
 
-                var queryCreateTask = await amocrm.Tasks.Add(task);
-            }
+            var queryCreateNOte = await amocrm.NotesLead.Add(note);
+
+            // Add Task
+            //if (lead != null)
+            //{
+            //    var task = new TaskDTO()
+            //    {
+            //        ElementId = queryCreateLead.Id,
+            //        ElementType = (int)ElementTypeEnum.Сделка,
+            //        CompleteTillAt = DateTime.Today,
+            //        TaskType = 965749,
+            //        Text = @"Существует похожая заявка у этого пользователя. Проверить на дубли."
+            //    };
+
+            //    var queryCreateTask = await amocrm.Tasks.Add(task);
+            //}
 
             return queryCreateLead.Id.Value;
         }
 
     }
+
+
+
+        
 }
