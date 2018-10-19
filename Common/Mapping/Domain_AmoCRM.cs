@@ -9,9 +9,9 @@ using System.Text;
 
 namespace Common.Mapping
 {
-    public class AmoCRMtoDomain
+    public class Domain_AmoCRM
     {
-        public AmoCRMtoDomain(TypeAdapterConfig config)
+        public Domain_AmoCRM(TypeAdapterConfig config)
         {
             config.NewConfig<ContactDTO, Contact>()
                 .Ignore(dest => dest.ChangeValueDelegate)
@@ -29,9 +29,6 @@ namespace Common.Mapping
             config.NewConfig<List<Lead>, LeadsField>()
                 .Map(dest => dest.IDs, src => src.Select(x=>x.Id))
             ;
-
-
-
 
             config.NewConfig<LeadDTO, Lead>()
                 .Map(dest => dest.Company, src => src.Company != null ? new Company { Id = (int)src.Company.Id } : null)

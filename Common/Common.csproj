@@ -11,6 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Library1C\Library1C.csproj" />
+    <ProjectReference Include="..\..\LibraryNeoClient\LibraryNeoClient.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 

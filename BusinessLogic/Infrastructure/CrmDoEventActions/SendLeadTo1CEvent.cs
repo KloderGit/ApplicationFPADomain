@@ -41,7 +41,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             if (e.Entity != "leads" || String.IsNullOrEmpty(e.EntityId)) return;
             var @event = e.Events.FirstOrDefault();
             if (@event.Event != "status" ||
-                (@event.CurrentValue != "19368232")) return;
+                (@event.CurrentValue != "19368232" & @event.CurrentValue != "142" & @event.CurrentValue != "18855166" )) return;
 
             Lead lead = null;
             Contact contact = null;
@@ -185,7 +185,13 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 dto.ContractEducationStart = lead.ProgramStartDate().Value;
                 dto.ContractEducationEnd = lead.ProgramStartDate().Value.AddDays(180);
                 dto.ContractExpire = lead.ContractExpireDate().Value;
+
                 dto.ContractGroup = "Общая группа";
+
+                if (lead.Pipeline.Id == 1042456) dto.ContractGroup = lead.DistantGroup().Value;
+                if (lead.Pipeline.Id == 920011) dto.ContractGroup = lead.FullTimeGroup().Value;
+
+                dto.ContractSubGroup = lead.SubGroup()?.Value ?? "";
             }
 
             var userActions3 = new Actions.User1C(database, logger, mapper);
@@ -208,7 +214,11 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                 var queryCreateTask = await amoManager.NotesLead.Add( note );
 
-                logger.Information( "Сделка успешно отправлена в 1С. Мероприятие - {Event} {Id} | Контакт - {Name} {Id}", lead.Name, lead.Id, contact.Name, contact.Id );
+                logger.Information( "Сделка успешно отправлена в 1С. Мероприятие - {Event} [{LeadId}] | Контакт - {Name} [{ContactId}]", lead.Name, lead.Id, contact.Name, contact.Id );
+
+                lead.IsInService1C(true);
+
+                await amoManager.Leads.Update( lead.GetChanges().Adapt<LeadDTO>( mapper ) );
 
             }
             catch (ArgumentException ex)

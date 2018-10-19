@@ -41,7 +41,10 @@ namespace Common.Configuration.Crm
         ParcipateForm = 566891,
         EducationType = 566897,
         Guid = 570933,
-        Promotions = 574701
+        Promotions = 574701,
+        IsInService1C = 579855,
+        FullTimeGroup = 579887,
+        SubGroup = 579889
     }
 
 }

@@ -406,5 +406,75 @@ namespace Common.Extensions.Models.Crm
         //        }
         //    };
         //}
+
+
+
+        public static bool IsInService1C(this Lead lead)
+        {
+            return lead.Fields?.FirstOrDefault( x => x.Id == (int)LeadFieldsEnum.IsInService1C )?.Values.FirstOrDefault().Value == "1" ? true : false;
+        }
+
+        public static void IsInService1C(this Lead lead, bool value)
+        {
+            lead.ChangeValueDelegate += delegate (Lead x) {
+                if (x.Fields == null) x.Fields = new List<Field>();
+
+                if (!x.Fields.Any( fl => fl.Id == (int)LeadFieldsEnum.IsInService1C ))
+                {
+                    x.Fields.Add( new Field { Id = (int)LeadFieldsEnum.IsInService1C } );
+                }
+
+                var digit = value.ToString().ToUpper() == "TRUE" ? "1" : "0";
+
+                x.Fields.FirstOrDefault( fl => fl.Id == (int)LeadFieldsEnum.IsInService1C ).Values = new List<FieldValue> { new FieldValue { Value = digit } };
+            };
+        }
+
+
+
+        public static FieldValue FullTimeGroup(this Lead lead)
+        {
+            return lead.Fields?.FirstOrDefault( x => x.Id == (int)LeadFieldsEnum.FullTimeGroup )?.Values.FirstOrDefault();
+        }
+
+        public static void FullTimeGroup(this Lead lead, int value)
+        {
+            lead.ChangeValueDelegate += delegate (Lead x) {
+                if (value != 0)
+                {
+                    if (x.Fields == null) x.Fields = new List<Field>();
+
+                    if (!x.Fields.Any( fl => fl.Id == (int)LeadFieldsEnum.FullTimeGroup ))
+                    {
+                        x.Fields.Add( new Field { Id = (int)LeadFieldsEnum.FullTimeGroup, Values = new List<FieldValue>() } );
+                    }
+
+                    x.Fields.FirstOrDefault( fl => fl.Id == (int)LeadFieldsEnum.FullTimeGroup ).Values = new List<FieldValue> { new FieldValue { Value = value.ToString() } };
+                }
+            };
+        }
+
+
+        public static FieldValue SubGroup(this Lead lead)
+        {
+            return lead.Fields?.FirstOrDefault( x => x.Id == (int)LeadFieldsEnum.SubGroup )?.Values.FirstOrDefault();
+        }
+
+        public static void SubGroup(this Lead lead, int value)
+        {
+            lead.ChangeValueDelegate += delegate (Lead x) {
+                if (value != 0)
+                {
+                    if (x.Fields == null) x.Fields = new List<Field>();
+
+                    if (!x.Fields.Any( fl => fl.Id == (int)LeadFieldsEnum.SubGroup ))
+                    {
+                        x.Fields.Add( new Field { Id = (int)LeadFieldsEnum.SubGroup, Values = new List<FieldValue>() } );
+                    }
+
+                    x.Fields.FirstOrDefault( fl => fl.Id == (int)LeadFieldsEnum.SubGroup ).Values = new List<FieldValue> { new FieldValue { Value = value.ToString() } };
+                }
+            };
+        }
     }
 }

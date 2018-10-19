@@ -30,12 +30,12 @@ namespace WebPortalBuisenessLogic
         Lazy<DataManager> amocrm;
         Lazy<UnitOfWork> database;
 
+        ServiceLibraryNeoClient.Implements.DataManager neoDB;
+
         public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping)
         {
             this.logger = logger;
             this.mapper = mapping;
-                new RegMapster(mapper);
-            new RegisterMaps(mapper);
 
             var amoAccount = configuration.GetSection("providers:0:AmoCRM:connection:account:name").Value;
             var amoUser = configuration.GetSection("providers:0:AmoCRM:connection:account:email").Value;
@@ -47,6 +47,8 @@ namespace WebPortalBuisenessLogic
             this.amocrm = new Lazy<DataManager>(() => new DataManager(amoAccount, amoUser, amoPass));
 
             this.database = new Lazy<UnitOfWork>(new UnitOfWork(user1C, pass1C));
+
+            this.neoDB = new ServiceLibraryNeoClient.Implements.DataManager( new Uri( "http://localhost:7474/db/data" ), "neo4j", "Kaligula2" );
         }
 
 
@@ -135,6 +137,28 @@ namespace WebPortalBuisenessLogic
             lead.MainContact = await GetContactById(lead.MainContact.Id);
 
             return lead.Adapt<WizardDTO>(mapper);
+        }
+
+
+
+        public void UpdateEducationDB()
+        {
+            var updQuery = database.Value.Programs.GetList().Result;
+
+            var array = updQuery.Where(p=>p.active== "Активный" ).Adapt<IEnumerable<EducationProgram>>( mapper );
+            var dto = array.Adapt< IEnumerable<ProgramNode>>( mapper );
+
+            foreach (var item in dto)
+            {
+                neoDB.Programs.Add( item );
+            }
+        }
+
+        public IEnumerable<EducationProgram> GetDBPrograms()
+        {
+            var query = neoDB.Programs.GetList().Adapt<IEnumerable<EducationProgram>>( mapper );
+
+            return query;
         }
     }
 }

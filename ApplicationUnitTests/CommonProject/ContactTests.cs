@@ -24,7 +24,7 @@ namespace ApplicationUnitTests.CommonProject
 
         public ContactTests()
         {
-            new AmoCRMtoDomain(mapper);
+            new Domain_AmoCRM( mapper);
 
             contact.AccountId = 17769199;
             contact.ClosestTaskAt = DateTime.MinValue;

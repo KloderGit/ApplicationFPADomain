@@ -40,17 +40,17 @@ namespace WebApiBusinessLogic
         SendLeadTo1CEvent sendLead;
 
         public BusinessLogic(ILoggerService logger, IConfiguration configuration, TypeAdapterConfig mapping,
-            LibraryAmoCRM.DataManager amoManager, UnitOfWork service1C)
+            LibraryAmoCRM.DataManager amoManager, UnitOfWork service1C, ServiceLibraryNeoClient.Implements.DataManager neo)
         {
             this.logger = logger;   // Логи
 
             this.mapper = mapping;  // Maps
-                new RegisterMaps(mapper);
+                new RegisterCommonMaps(mapper);
 
             this.amocrm = amoManager;   // Amo
             this.database = service1C;  // 1C
 
-            //neodatabase = neo;  // neo
+            neodatabase = neo;  // neo
 
             // Events
             updGuid = new UpdateGuid(amocrm, database, eventsType, mapper, logger);
@@ -95,7 +95,7 @@ namespace WebApiBusinessLogic
 
         public string GetProgramsListForAmo()
         {
-            //var programs = neo.Value.Programs.GetList().Where( x => x.Type == "Программа обучения").Where( x=>x.Active );
+            var programs = neodatabase.Programs.GetList().Where( x => x.Type == "Программа обучения" ).Where( x => x.Active );
 
             var cont = amocrm.Contacts.Get().SetParam(x => x.Phone = "9031453412").Execute().Result;
 
@@ -103,10 +103,10 @@ namespace WebApiBusinessLogic
 
             var sdfsdf = ertert.Phones();
 
-            //var list = programs.Select( it => new { Name = it.Title, Guid = it.Guid, Type = it.Type } );
+            var list = programs.Select( it => new { Name = it.Title, Guid = it.Guid, Type = it.Type } );
 
-            //return JsonConvert.SerializeObject(list);
-            return "";
+            return JsonConvert.SerializeObject( list );
+            //return "";
         }
 
 
