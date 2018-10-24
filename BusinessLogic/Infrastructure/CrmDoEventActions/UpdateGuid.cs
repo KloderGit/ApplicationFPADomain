@@ -14,23 +14,25 @@ using Domain.Models.Crm;
 using Common.Logging;
 using System.Reflection;
 using Common.Interfaces;
+using LibraryAmoCRM.Interfaces;
+using System.Collections.Generic;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
     public class UpdateGuid
     {
-        DataManager amoManager;
+        IDataManager crm;
         UnitOfWork database;
 
         TypeAdapterConfig mapper;
         ILoggerService logger;
 
-        public UpdateGuid(DataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
+        public UpdateGuid(IDataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.mapper = mapper;
             this.logger = logger;
             this.database = database;
-            this.amoManager = amocrm;
+            this.crm = amocrm;
 
             Events.Update += DoAction;
             Events.Add += DoAction;
@@ -40,15 +42,18 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         {
             if (e.Entity != "contacts" || String.IsNullOrEmpty(e.EntityId) || e.ContactType != "contact") return;
 
+            IEnumerable<ContactDTO> amoUser = null;
+            Contact contact = null;
+
             try
             {
-                var amoUser = await amoManager.Contacts.Get().SetParam(prm => prm.Id = int.Parse(e.EntityId)).Execute();
+                amoUser = await crm.Contacts.Get().Filter(prm => prm.Id = int.Parse(e.EntityId)).Execute();
+                    if (amoUser == null) throw new NullReferenceException( "Контакт [ Id -" + e.EntityId + " ] не найден в CRM" );
 
-                var contact = amoUser.FirstOrDefault().Adapt<Contact>(mapper);
+                contact = amoUser.FirstOrDefault().Adapt<Contact>(mapper);
 
                 var hasGuid = contact.Guid();
-
-                if (!String.IsNullOrEmpty(hasGuid)) return;
+                    if (!String.IsNullOrEmpty(hasGuid)) return;
 
                 var guid = await new LookForContact(database, logger).Find(contact);
 
@@ -56,7 +61,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 {
                     contact.Guid(guid);
 
-                    await amoManager.Contacts.Update(
+                    await crm.Contacts.Update(
                         contact.GetChanges().Adapt<ContactDTO>(mapper)
                     );
 
@@ -64,14 +69,14 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 }
 
             }
+            catch (NullReferenceException ex)
+            {
+                logger.Debug( ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser );
+                return;
+            }
             catch (Exception ex)
             {
-                var info = new MessageLocation(this)
-                {
-                    Metod = MethodBase.GetCurrentMethod().Name
-                };
-
-                logger.Error(ex, "Ошибка по адресу - {@Location}", info);
+                logger.Error(ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id );
             }
         }
     }

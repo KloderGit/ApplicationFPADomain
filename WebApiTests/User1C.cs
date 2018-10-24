@@ -30,9 +30,9 @@ namespace WebApiTests
             var logger = new LoggerService();
             TypeAdapterConfig mapper = new TypeAdapterConfig();
 
-            new AmoCRMtoDomain(mapper);
+            new Domain_AmoCRM( mapper);
 
-            new DomainTo1C(mapper);
+            new Domain_1C( mapper);
 
             var action = new User1C(database, logger, mapper);
 

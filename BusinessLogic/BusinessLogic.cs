@@ -3,8 +3,10 @@ using Common.Interfaces;
 using Common.Mapping;
 using Domain.Models.Crm;
 using Library1C;
+using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
+using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Microsoft.Extensions.Configuration;
@@ -29,7 +31,6 @@ namespace WebApiBusinessLogic
         ILoggerService logger;
         TypeAdapterConfig mapper;
 
-        LibraryAmoCRM.DataManager amocrm;
         UnitOfWork database;
         ServiceLibraryNeoClient.Implements.DataManager neodatabase;
 
@@ -39,23 +40,30 @@ namespace WebApiBusinessLogic
         UpdatePhone updPhone;
         SendLeadTo1CEvent sendLead;
 
-        public BusinessLogic(ILoggerService logger, IConfiguration configuration, TypeAdapterConfig mapping,
-            LibraryAmoCRM.DataManager amoManager, UnitOfWork service1C, ServiceLibraryNeoClient.Implements.DataManager neo)
+        IDataManager crm;
+
+        public BusinessLogic(
+            ILoggerService logger, 
+            IConfiguration configuration, 
+            TypeAdapterConfig mapping, 
+            UnitOfWork service1C, 
+            ServiceLibraryNeoClient.Implements.DataManager neo, 
+            IDataManager amocrm)
         {
             this.logger = logger;   // Логи
 
             this.mapper = mapping;  // Maps
                 new RegisterCommonMaps(mapper);
 
-            this.amocrm = amoManager;   // Amo
+            this.crm = amocrm; // Amo
             this.database = service1C;  // 1C
 
             neodatabase = neo;  // neo
 
             // Events
-            updGuid = new UpdateGuid(amocrm, database, eventsType, mapper, logger);
-            updPhone = new UpdatePhone(amocrm, eventsType, mapper, logger);
-            sendLead = new SendLeadTo1CEvent(amocrm, database, eventsType, mapper, logger);
+            updGuid = new UpdateGuid(crm, database, eventsType, mapper, logger);
+            updPhone = new UpdatePhone(crm, eventsType, mapper, logger);
+            sendLead = new SendLeadTo1CEvent(crm, database, eventsType, mapper, logger);
 
             //new RegisterMapsterConfig();
 
@@ -97,7 +105,7 @@ namespace WebApiBusinessLogic
         {
             var programs = neodatabase.Programs.GetList().Where( x => x.Type == "Программа обучения" ).Where( x => x.Active );
 
-            var cont = amocrm.Contacts.Get().SetParam(x => x.Phone = "9031453412").Execute().Result;
+            var cont = crm.Contacts.Get().Filter(x => x.Query = "9031453412").Execute().Result;
 
             var ertert = cont.FirstOrDefault().Adapt<Contact>(mapper);
 
@@ -115,7 +123,7 @@ namespace WebApiBusinessLogic
             var sd = new LeadDTO();
             sd.ResponsibleUserId = (int)ResponsibleUserEnum.Анастасия_Столовая;
 
-            return await amocrm.Leads.Get().SetParam(x => x.Status = status).Execute();
+            return await crm.Leads.Get().Filter(x => x.Status = status).Execute();
         }
 
         private MethodInfo GetMetod(Type genericType)
@@ -142,11 +150,11 @@ namespace WebApiBusinessLogic
             //var user = amocrm.Contacts.Get().SetParam(x => x.Phone = phone.LeaveJustDigits()).Execute().Result;
             //var user2 = amocrm.Contacts.Get().SetParam(x => x.Query = email.ClearEmail()).Execute().Result;
 
-            var userAction = new UserAmoCRM(amocrm, mapper, logger);
+            var userAction = new UserAmoCRM(crm, mapper, logger);
 
             var contactGuid = userAction.FindContact(phone).Result;
 
-            var lead = amocrm.Leads.Get().SetParam(p => p.Query = contactGuid.Name).Execute().Result;
+            var lead = crm.Leads.Get().Filter(p => p.Query = contactGuid.Name).Execute().Result;
 
             return true;
         }
@@ -163,8 +171,8 @@ namespace WebApiBusinessLogic
 
             //var program = prgms?.FirstOrDefault(el => el.CustomFields.FirstOrDefault(id=>id.Id == 268359).Values.FirstOrDefault().Value == item.LeadGuid);
 
-            var types1 = amocrm.Account.Embedded.CustomFields.Leads[66349].Enums;
-            var types2 = amocrm.Account.Embedded.CustomFields.Leads[227457].Enums;
+            var types1 = crm.Account.Embedded.CustomFields.Leads[66349].Enums;
+            var types2 = crm.Account.Embedded.CustomFields.Leads[227457].Enums;
             var types = types2.Union(types1).ToDictionary(pair => pair.Key, pair => pair.Value);
             try
             {
@@ -186,7 +194,7 @@ namespace WebApiBusinessLogic
 
 
             // LookFor or Create Contact
-            var userAction = new UserAmoCRM(amocrm, mapper, logger);            
+            var userAction = new UserAmoCRM(crm, mapper, logger);            
             contact = userAction.FindContact(item.ContactPhones).Result;
                 if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
 
@@ -194,8 +202,8 @@ namespace WebApiBusinessLogic
                 try
                 {
                     Contact cont = builder;
-                    var queryCreateContact = await amocrm.Contacts.Add(cont.Adapt<ContactDTO>(mapper));
-                    var queryGetContact = await amocrm.Contacts.Get().SetParam(i => i.Id = queryCreateContact.Id.Value).Execute();
+                    var queryCreateContact = await crm.Contacts.Add(cont.Adapt<ContactDTO>(mapper));
+                    var queryGetContact = await crm.Contacts.Get().Filter(i => i.Id = queryCreateContact.Id.Value).Execute();
                     contact = queryGetContact.FirstOrDefault().Adapt<Contact>(mapper);
                 }
                 catch (Exception ex) {
@@ -204,14 +212,14 @@ namespace WebApiBusinessLogic
             }
 
             // LookFor Lead
-            var query = await amocrm.Leads.Get().SetParam(p => p.Query = contact.Name).Execute();
+            var query = await crm.Leads.Get().Filter(p => p.Query = contact.Name).Execute();
             var result = query?.Adapt<IEnumerable<Lead>>(mapper);
             var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
             lead = userLeads?.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
 
             // Create Lead
             ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = contact.Id } };
-            var queryCreateLead = await amocrm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+            var queryCreateLead = await crm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
 
             var note = new NoteDTO()
             {
@@ -224,7 +232,7 @@ namespace WebApiBusinessLogic
                 }
             };
 
-            var queryCreateNOte = await amocrm.NotesLead.Add(note);
+            var queryCreateNOte = await crm.Notes.Add(note);
 
             // Add Task
             //if (lead != null)

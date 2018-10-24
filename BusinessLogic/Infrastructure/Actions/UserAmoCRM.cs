@@ -4,6 +4,7 @@ using Common.Interfaces;
 using Domain.Models.Crm;
 using LibraryAmoCRM;
 using LibraryAmoCRM.Infarstructure.QueryParams;
+using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Serilog;
@@ -18,10 +19,10 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
     public class UserAmoCRM
     {
         ILoggerService logger;
-        DataManager amoManager;
+        IDataManager amoManager;
         TypeAdapterConfig mapper;
 
-        public UserAmoCRM(DataManager amoManager, TypeAdapterConfig mapper, ILoggerService logger)
+        public UserAmoCRM(IDataManager amoManager, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.logger = logger;
             this.amoManager = amoManager;
@@ -64,7 +65,7 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
 
             foreach (var param in queryParams)
             {
-                query.SetParam(i=>i.Query = param);
+                query.Filter(i=>i.Query = param);
             }
             
             var result = await query.Execute();
@@ -76,7 +77,7 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
         {
             if ( String.IsNullOrEmpty(queryParam) ) return null;
 
-            var query = amoManager.Contacts.Get().SetParam(p=>p.Query = queryParam);
+            var query = amoManager.Contacts.Get().Filter(p=>p.Query = queryParam);
             var result = await query.Execute();
 
             return result?.FirstOrDefault().Adapt<Contact>(mapper);

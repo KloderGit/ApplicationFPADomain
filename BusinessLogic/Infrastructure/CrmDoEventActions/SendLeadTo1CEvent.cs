@@ -6,6 +6,7 @@ using Library1C;
 using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
+using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Serilog;
@@ -20,17 +21,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
     public class SendLeadTo1CEvent
     {
-        DataManager amoManager;
+        IDataManager crm;
         UnitOfWork database;
 
         TypeAdapterConfig mapper;
         ILoggerService logger;
 
-        public SendLeadTo1CEvent(DataManager amocrm, UnitOfWork service1C, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
+        public SendLeadTo1CEvent(IDataManager amocrm, UnitOfWork service1C, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.mapper = mapper;
             this.logger = logger;
-            this.amoManager = amocrm;
+            this.crm = amocrm;
             this.database = service1C;
 
             Events.Status += DoAction;
@@ -51,7 +52,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             #region Получить сделку
             try
             {
-                var queryLead = await amoManager.Leads.Get().SetParam(i => i.Id = int.Parse(e.EntityId)).Execute();
+                var queryLead = await crm.Leads.Get().Filter(i => i.Id = int.Parse(e.EntityId)).Execute();
                 lead = queryLead.FirstOrDefault().Adapt<Lead>(mapper);
                 if (lead == null) throw new NullReferenceException();
             }
@@ -72,7 +73,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             {
                 try
                 {
-                    var queryContact = await amoManager.Contacts.Get().SetParam(i => i.Id = lead.MainContact.Id).Execute();
+                    var queryContact = await crm.Contacts.Get().Filter(i => i.Id = lead.MainContact.Id).Execute();
                     contact = queryContact.FirstOrDefault().Adapt<Contact>(mapper);
                     if (contact == null) throw new NullReferenceException();
                 }
@@ -119,7 +120,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         }
                     };
 
-                    var queryCreateTask = await amoManager.NotesContact.Add(note);
+                    var queryCreateTask = await crm.Notes.Add(note);
 
                     return;
                 }
@@ -133,7 +134,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         Text = "Ошибка сохранения пользователя в 1С. Сообщение - " + ex.Message
                     };
 
-                    var queryCreateTask = await amoManager.NotesContact.Add(exceptionNote);
+                    var queryCreateTask = await crm.Notes.Add(exceptionNote);
                     return;
                 }
                 catch (Exception ex)
@@ -156,11 +157,11 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     }
                 };
 
-                var queryCreateTaskSucces = await amoManager.NotesLead.Add(noteSucces);
+                var queryCreateTaskSucces = await crm.Notes.Add(noteSucces);
 
                 contact.Guid(guid);
 
-                await amoManager.Contacts.Update(contact.GetChanges().Adapt<ContactDTO>(mapper));
+                await crm.Contacts.Update(contact.GetChanges().Adapt<ContactDTO>(mapper));
             }
             #endregion
 
@@ -212,13 +213,13 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     }
                 };
 
-                var queryCreateTask = await amoManager.NotesLead.Add( note );
+                var queryCreateTask = await crm.Notes.Add( note );
 
                 logger.Information( "Сделка успешно отправлена в 1С. Мероприятие - {Event} [{LeadId}] | Контакт - {Name} [{ContactId}]", lead.Name, lead.Id, contact.Name, contact.Id );
 
                 lead.IsInService1C(true);
 
-                await amoManager.Leads.Update( lead.GetChanges().Adapt<LeadDTO>( mapper ) );
+                await crm.Leads.Update( lead.GetChanges().Adapt<LeadDTO>( mapper ) );
 
             }
             catch (ArgumentException ex)
@@ -231,7 +232,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     Text = "Ошибка ошибка отправки сделки в 1С. Проверьте поля данных или зачислите вручную."
                 };
 
-                var queryCreateTask = await amoManager.NotesLead.Add( exceptionNote );
+                var queryCreateTask = await crm.Notes.Add( exceptionNote );
 
                 logger.Warning( ex, "Ошибка отправки сделки в 1С" );
             }
