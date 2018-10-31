@@ -1,4 +1,5 @@
 ﻿using Common.Extensions.Models.Crm;
+using Common.Interfaces;
 using Common.Mapping;
 using Domain.Models.Crm;
 using Domain.Models.Education;
@@ -6,10 +7,12 @@ using Library1C;
 using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
+using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using ServiceLibraryNeoClient.Implements;
 using ServiceLibraryNeoClient.Models;
 using System;
 using System.Collections.Generic;
@@ -24,35 +27,28 @@ namespace WebPortalBuisenessLogic
 {
     public class BusinessLogic
     {
-        ILogger logger;
+        ILoggerService logger;
         TypeAdapterConfig mapper;
 
-        Lazy<DataManager> amocrm;
-        Lazy<UnitOfWork> database;
+        IDataManager crm;
+        UnitOfWork service1C;
 
-        ServiceLibraryNeoClient.Implements.DataManager neoDB;
+        DataManager neoDB;
 
-        public BusinessLogic(ILogger logger, IConfiguration configuration, TypeAdapterConfig mapping)
+        public BusinessLogic(
+            ILoggerService logger,
+            TypeAdapterConfig mapping,
+            IDataManager crm,
+            UnitOfWork service1C,
+            DataManager neo )
         {
             this.logger = logger;
             this.mapper = mapping;
 
-            var amoAccount = configuration.GetSection("providers:0:AmoCRM:connection:account:name").Value;
-            var amoUser = configuration.GetSection("providers:0:AmoCRM:connection:account:email").Value;
-            var amoPass = configuration.GetSection("providers:0:AmoCRM:connection:account:hash").Value;
-
-            var user1C = configuration.GetSection("providers:1:1C:connection:account:user").Value;
-            var pass1C = configuration.GetSection("providers:1:1C:connection:account:pass").Value;
-
-            this.amocrm = new Lazy<DataManager>(() => new DataManager(amoAccount, amoUser, amoPass));
-
-            this.database = new Lazy<UnitOfWork>(new UnitOfWork(user1C, pass1C));
-
-            this.neoDB = new ServiceLibraryNeoClient.Implements.DataManager( new Uri( "http://localhost:7474/db/data" ), "neo4j", "Kaligula2" );
+            this.crm = crm;
+            this.service1C = service1C;
+            this.neoDB = neo;
         }
-
-
-
 
         public async Task<bool> UpdateLeadAndContact(WizardDTO model)
         {
@@ -61,7 +57,7 @@ namespace WebPortalBuisenessLogic
 
             var leadDTO = lead.GetChanges().Adapt<LeadDTO>(mapper);
             leadDTO.Name = "Сделка с планшета";
-            if (model.Program != 0) leadDTO.Name = amocrm.Value.Account.Embedded.CustomFields.Leads.FirstOrDefault(k => k.Key == 227457).Value.Enums.FirstOrDefault(x=>x.Key == model.Program).Value;
+            if (model.Program != 0) leadDTO.Name = crm.Account.Embedded.CustomFields.Leads.FirstOrDefault(k => k.Key == 227457).Value.Enums.FirstOrDefault(x=>x.Key == model.Program).Value;
 
             var contact = model.Adapt<Contact>(mapper);
             contact.Phones(PhoneTypeEnum.MOB, model.Phone);
@@ -78,9 +74,9 @@ namespace WebPortalBuisenessLogic
 
             try
             {
-                await amocrm.Value.Contacts.Update(contactDTO);
+                await crm.Contacts.Update(contactDTO);
 
-                await amocrm.Value.Leads.Update(leadDTO);
+                await crm.Leads.Update(leadDTO);
 
                 return true;
             }
@@ -103,7 +99,7 @@ namespace WebPortalBuisenessLogic
 
             try
             {
-                var queryLeads = amocrm.Value.Leads.Get().SetParam(x => x.Status = status).Execute().Result;
+                var queryLeads = crm.Leads.Get().Filter(x => x.Status = status).Execute().Result;
                 var leads = queryLeads.Adapt<IEnumerable<Lead>>(mapper);
 
                 var ld = leads?.Where(cn => cn.Contacts != null || cn.MainContact != null).ToList();
@@ -125,13 +121,13 @@ namespace WebPortalBuisenessLogic
 
         public async Task<Contact> GetContactById(int id)
         {
-            var contacts = await amocrm.Value.Contacts.Get().SetParam(x => x.Id = id).Execute();
+            var contacts = await crm.Contacts.Get().Filter(x => x.Id = id).Execute();
             return contacts.FirstOrDefault().Adapt<Contact>(mapper);
         }
 
         public async Task<WizardDTO> GetLeadById(int id)
         {
-            var queryLead = await amocrm.Value.Leads.Get().SetParam(x => x.Id = id).Execute();
+            var queryLead = await crm.Leads.Get().Filter(x => x.Id = id).Execute();
             var lead = queryLead.FirstOrDefault().Adapt<Lead>(mapper);
 
             lead.MainContact = await GetContactById(lead.MainContact.Id);
@@ -143,7 +139,7 @@ namespace WebPortalBuisenessLogic
 
         public void UpdateEducationDB()
         {
-            var updQuery = database.Value.Programs.GetList().Result;
+            var updQuery = service1C.Programs.GetList().Result;
 
             var array = updQuery.Where(p=>p.active== "Активный" ).Adapt<IEnumerable<EducationProgram>>( mapper );
             var dto = array.Adapt< IEnumerable<ProgramNode>>( mapper );

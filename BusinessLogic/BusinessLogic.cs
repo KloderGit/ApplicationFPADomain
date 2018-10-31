@@ -101,20 +101,13 @@ namespace WebApiBusinessLogic
         }
 
 
-        public string GetProgramsListForAmo()
+        public IEnumerable<ProgramList> GetProgramsListForAmo()
         {
-            var programs = neodatabase.Programs.GetList().Where( x => x.Type == "Программа обучения" ).Where( x => x.Active );
+            var programs = neodatabase.Programs.GetList().Where( x => x.Active );
 
-            var cont = crm.Contacts.Get().Filter(x => x.Query = "9031453412").Execute().Result;
+            var list = programs.Select( it => new ProgramList { Title = it.Title, Guid = it.Guid, Type = it.Type, Department = it.Department.Title } );
 
-            var ertert = cont.FirstOrDefault().Adapt<Contact>(mapper);
-
-            var sdfsdf = ertert.Phones();
-
-            var list = programs.Select( it => new { Name = it.Title, Guid = it.Guid, Type = it.Type } );
-
-            return JsonConvert.SerializeObject( list );
-            //return "";
+            return list;
         }
 
 
