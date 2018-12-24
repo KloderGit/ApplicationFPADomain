@@ -47,4 +47,43 @@ namespace Common.Configuration.Crm
         SubGroup = 579889
     }
 
+    public enum EducationTypeEnum
+    {
+        Default = (int)ResponsibleUserEnum.Анастасия_Столовая,
+        ОТКРЫТОЕ = (int)ResponsibleUserEnum.Ирина_Моисеева,
+        ОТКРЫТАЯ = (int)ResponsibleUserEnum.Ирина_Моисеева,
+        КОРПОРАТИВНОЕ = (int)ResponsibleUserEnum.Лина_Серрие,
+        КОРПОРАТИВНАЯ = (int)ResponsibleUserEnum.Лина_Серрие,
+        ОЧНОЕ = (int)ResponsibleUserEnum.Лина_Серрие,
+        ОЧНАЯ = (int)ResponsibleUserEnum.Лина_Серрие,
+        ДИСТАНЦИОННАЯ = (int)ResponsibleUserEnum.Анастасия_Шатилова,
+        ДИСТАНЦИОННОЕ = (int)ResponsibleUserEnum.Анастасия_Шатилова,
+    }
+
+    public enum PipelineStartStatusEnum
+    {
+        Default = 18664336,
+        ОТКРЫТОЕ = 17769205,
+        ОТКРЫТАЯ = 17769205,
+        КОРПОРАТИВНОЕ = 17793877,
+        ОЧНОЕ = 17793886,
+        ОЧНАЯ = 17793886,
+        ДИСТАНЦИОННАЯ = 18855163,
+        ДИСТАНЦИОННОЕ = 18855163
+    }
+
+    public enum ResponsibleUserEnum
+    {
+        Robot = 2076025,
+        Лина_Серрие = 2079676,
+        Анастасия_Столовая = 2079679,
+        Ирина_Моисеева = 2079682,
+        Евгения_Ковалева = 2079688,
+        Наталья_Бердникова = 2079706,
+        Мила_Маминова = 2079712,
+        Илья_Иджян = 2079718,
+        Анастасия_Шатилова = 2267437,
+        Филатова_Елена = 2950174,
+        Шевченко_Екатерина = 2950210
+    }
 }

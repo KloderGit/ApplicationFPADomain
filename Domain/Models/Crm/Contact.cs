@@ -1,7 +1,5 @@
-﻿using Domain.Interfaces;
-using Domain.Models.Crm.Fields;
+﻿using Domain.Models.Crm.Fields;
 using Domain.Models.Crm.Parent;
-using LibraryAmoCRM.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;

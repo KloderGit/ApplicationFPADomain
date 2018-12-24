@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Common.Configuration.Crm;
+
 
 namespace WebApiBusinessLogic.Infrastructure.Helpers
 {
@@ -148,11 +150,11 @@ namespace WebApiBusinessLogic.Infrastructure.Helpers
             return this;
         }
 
-        public FormDTOBuilder Phone(IEnumerable<string> value)
+        public FormDTOBuilder Phone(string value)
         {
-            if (value == null || value.Count() == 0) return this;
+            if (String.IsNullOrEmpty( value )) return this;
 
-            contact.Phones(PhoneTypeEnum.MOB, value.FirstOrDefault());
+            contact.Phones(PhoneTypeEnum.MOB, value);
             this.contact.Fields = this.contact.Fields ?? new List<Domain.Models.Crm.Fields.Field>();
             this.contact.Fields = this.contact.GetChanges().Fields;
 
@@ -160,11 +162,11 @@ namespace WebApiBusinessLogic.Infrastructure.Helpers
         }
 
 
-        public FormDTOBuilder Email(IEnumerable<string> value)
+        public FormDTOBuilder Email(string value)
         {
-            if (value == null || value.Count() == 0) return this;
+            if (String.IsNullOrEmpty( value )) return this;
 
-            contact.Email(EmailTypeEnum.PRIV, value.FirstOrDefault());
+            contact.Email(EmailTypeEnum.PRIV, value);
 
             this.contact.Fields = this.contact.Fields ?? new List<Domain.Models.Crm.Fields.Field>();
             this.contact.Fields = this.contact.GetChanges().Fields;
@@ -194,27 +196,4 @@ namespace WebApiBusinessLogic.Infrastructure.Helpers
             return builder.lead;
         }
     }
-
-    enum EducationTypeEnum
-    {
-        Default = (int)ResponsibleUserEnum.Анастасия_Столовая,
-        ОТКРЫТОЕ = (int)ResponsibleUserEnum.Ирина_Моисеева,
-        ОТКРЫТАЯ = (int)ResponsibleUserEnum.Ирина_Моисеева,
-        КОРПОРАТИВНОЕ = (int)ResponsibleUserEnum.Лина_Серрие,
-        КОРПОРАТИВНАЯ = (int)ResponsibleUserEnum.Лина_Серрие,
-        ОЧНОЕ = (int)ResponsibleUserEnum.Лина_Серрие,
-        ОЧНАЯ = (int)ResponsibleUserEnum.Лина_Серрие,
-        ДИСТАНЦИОННАЯ = (int)ResponsibleUserEnum.Ксения_Харымова,
-    }
-
-    enum PipelineStartStatusEnum
-    {
-        Default = 18664336,
-        ОТКРЫТОЕ = 17769205,
-        ОТКРЫТАЯ = 17769205,
-        КОРПОРАТИВНОЕ = 17793877,
-        ОЧНОЕ = 17793886,
-        ДИСТАНЦИОННАЯ = 18855163,
-    }
-
 }

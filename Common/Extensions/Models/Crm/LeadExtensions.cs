@@ -366,7 +366,7 @@ namespace Common.Extensions.Models.Crm
             lead.ChangeValueDelegate += delegate (Lead x) {
                 if (!String.IsNullOrEmpty(value))
                 {
-                    if (x.Fields == null) lead.Fields = new List<Field>();
+                    if (x.Fields == null) x.Fields = new List<Field>();
 
                     if (!x.Fields.Any(fl => fl.Id == (int)LeadFieldsEnum.Guid))
                     {

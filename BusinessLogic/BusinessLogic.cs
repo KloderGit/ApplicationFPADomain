@@ -1,18 +1,16 @@
-﻿using Common.Extensions.Models.Crm;
+﻿using Common.Configuration.Crm;
+using Common.Extensions.Models.Crm;
 using Common.Interfaces;
 using Common.Mapping;
 using Domain.Models.Crm;
 using Library1C;
-using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +20,6 @@ using WebApiBusinessLogic.Infrastructure.Actions;
 using WebApiBusinessLogic.Infrastructure.CrmDoEventActions;
 using WebApiBusinessLogic.Infrastructure.Helpers;
 using WebApiBusinessLogic.Models.Crm;
-using WebApiBusinessLogic.Models.Site;
 
 namespace WebApiBusinessLogic
 {
@@ -143,7 +140,7 @@ namespace WebApiBusinessLogic
             //var user = amocrm.Contacts.Get().SetParam(x => x.Phone = phone.LeaveJustDigits()).Execute().Result;
             //var user2 = amocrm.Contacts.Get().SetParam(x => x.Query = email.ClearEmail()).Execute().Result;
 
-            var userAction = new UserAmoCRM(crm, mapper, logger);
+            var userAction = new AmoCRMCommonActions(crm, mapper, logger);
 
             var contactGuid = userAction.FindContact(phone).Result;
 
@@ -153,97 +150,100 @@ namespace WebApiBusinessLogic
         }
 
 
-        public async Task<int> CreateLeadFormSite(SignUpForEvent item)
-        {
-            // Prepare
-            Contact contact = null;
-            Lead lead = null;
-            FormDTOBuilder builder = new FormDTOBuilder(contact, lead);
+        //public async Task<int> CreateLeadFormSite(SignUpForEvent item)
+        //{
+        //    // Prepare
+        //    Contact contact = null;
+        //    Lead lead = null;
+        //    FormDTOBuilder builder = new FormDTOBuilder(contact, lead);
 
-            //var prgms = await amocrm.Catalogs.Get().SetParam(i => i.Catalog = Catalogs.Programs).Execute();
+        //    //var prgms = await amocrm.Catalogs.Get().SetParam(i => i.Catalog = Catalogs.Programs).Execute();
 
-            //var program = prgms?.FirstOrDefault(el => el.CustomFields.FirstOrDefault(id=>id.Id == 268359).Values.FirstOrDefault().Value == item.LeadGuid);
+        //    //var program = prgms?.FirstOrDefault(el => el.CustomFields.FirstOrDefault(id=>id.Id == 268359).Values.FirstOrDefault().Value == item.LeadGuid);
 
-            var types1 = crm.Account.Embedded.CustomFields.Leads[66349].Enums;
-            var types2 = crm.Account.Embedded.CustomFields.Leads[227457].Enums;
-            var types = types2.Union(types1).ToDictionary(pair => pair.Key, pair => pair.Value);
-            try
-            {
-                builder.ContactName(item.ContactName)
-                    .Phone(item.ContactPhones)
-                    .Email(item.ContactEmails)
-                    .City(item.ContactCity)
-                    .LeadName(types, item.EventType, item.LeadName)
-                    .EducationType(item.LeadType)
-                    .Price(item.LeadPrice)
-                    .DateOfEvent(item.LeadDate)
-                    .LeadGuid(item.LeadGuid);
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "Ошибка при преобразовании запроса с сайта в Модели BL. Данные запроса {@Form}", item);
-                throw new ArgumentException();
-            }
+        //    var types1 = crm.Account.Embedded.CustomFields.Leads[66349].Enums;
+        //    var types2 = crm.Account.Embedded.CustomFields.Leads[227457].Enums;
+        //    var types = types2.Union(types1).ToDictionary(pair => pair.Key, pair => pair.Value);
+        //    try
+        //    {
+        //        builder.ContactName(item.ContactName)
+        //            .Phone(item.ContactPhones)
+        //            .Email(item.ContactEmails)
+        //            .City(item.ContactCity)
+        //            .LeadName(types, item.EventType, item.LeadName)
+        //            .EducationType(item.LeadType)
+        //            .Price(item.LeadPrice)
+        //            .DateOfEvent(item.LeadDate)
+        //            .LeadGuid(item.LeadGuid);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.Error(ex, "Ошибка при преобразовании запроса с сайта в Модели BL. Данные запроса {@Form}", item);
+        //        throw new ArgumentException();
+        //    }
 
 
-            // LookFor or Create Contact
-            var userAction = new UserAmoCRM(crm, mapper, logger);            
-            contact = userAction.FindContact(item.ContactPhones).Result;
-                if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
+        //    // LookFor or Create Contact
+        //    var userAction = new UserAmoCRM(crm, mapper, logger);
+        //    contact = userAction.FindContact(item.ContactPhones).Result;
+        //    if (contact == null) contact = userAction.FindContact(item.ContactEmails).Result;
 
-            if (contact == null) {
-                try
-                {
-                    Contact cont = builder;
-                    var queryCreateContact = await crm.Contacts.Add(cont.Adapt<ContactDTO>(mapper));
-                    var queryGetContact = await crm.Contacts.Get().Filter(i => i.Id = queryCreateContact.Id.Value).Execute();
-                    contact = queryGetContact.FirstOrDefault().Adapt<Contact>(mapper);
-                }
-                catch (Exception ex) {
-                    throw new ArgumentNullException();
-                }
-            }
+        //    if (contact == null)
+        //    {
+        //        try
+        //        {
+        //            Contact cont = builder;
+        //            var queryCreateContact = await crm.Contacts.Add(cont.Adapt<ContactDTO>(mapper));
+        //            var queryGetContact = await crm.Contacts.Get().Filter(i => i.Id = queryCreateContact.Id.Value).Execute();
+        //            contact = queryGetContact.FirstOrDefault().Adapt<Contact>(mapper);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            throw new ArgumentNullException();
+        //        }
+        //    }
 
-            // LookFor Lead
-            var query = await crm.Leads.Get().Filter(p => p.Query = contact.Name).Execute();
-            var result = query?.Adapt<IEnumerable<Lead>>(mapper);
-            var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
-            lead = userLeads?.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
+        //    // LookFor Lead
+        //    var query = await crm.Leads.Get().Filter(p => p.Query = contact.Name).Execute();
+        //    var result = query?.Adapt<IEnumerable<Lead>>(mapper);
+        //    var userLeads = result?.Where(l => l.MainContact.Id == contact.Id);
+        //    lead = userLeads?.FirstOrDefault(l => l.Name.ToUpper().Trim().Contains(item.LeadName.ToUpper().Trim()));
 
-            // Create Lead
-            ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = contact.Id } };
-            var queryCreateLead = await crm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
+        //    // Create Lead
+        //    ((Lead)builder).Contacts = new List<Contact> { new Contact { Id = contact.Id } };
+        //    var queryCreateLead = await crm.Leads.Add(((Lead)builder).Adapt<LeadDTO>(mapper));
 
-            var note = new NoteDTO()
-            {
-                ElementId = queryCreateLead.Id,
-                ElementType = (int)ElementTypeEnum.Сделка,
-                NoteType = 25,
-                Params = new NoteParams {
-                    Text = "Адрес отправки запроса: " + item.RequestUrl,
-                    Service = "WebApi | "
-                }
-            };
+        //    var note = new NoteDTO()
+        //    {
+        //        ElementId = queryCreateLead.Id,
+        //        ElementType = (int)ElementTypeEnum.Сделка,
+        //        NoteType = 25,
+        //        Params = new NoteParams
+        //        {
+        //            Text = "Адрес отправки запроса: " + item.RequestUrl,
+        //            Service = "WebApi | "
+        //        }
+        //    };
 
-            var queryCreateNOte = await crm.Notes.Add(note);
+        //    var queryCreateNOte = await crm.Notes.Add(note);
 
-            // Add Task
-            //if (lead != null)
-            //{
-            //    var task = new TaskDTO()
-            //    {
-            //        ElementId = queryCreateLead.Id,
-            //        ElementType = (int)ElementTypeEnum.Сделка,
-            //        CompleteTillAt = DateTime.Today,
-            //        TaskType = 965749,
-            //        Text = @"Существует похожая заявка у этого пользователя. Проверить на дубли."
-            //    };
+        //    // Add Task
+        //    //if (lead != null)
+        //    //{
+        //    //    var task = new TaskDTO()
+        //    //    {
+        //    //        ElementId = queryCreateLead.Id,
+        //    //        ElementType = (int)ElementTypeEnum.Сделка,
+        //    //        CompleteTillAt = DateTime.Today,
+        //    //        TaskType = 965749,
+        //    //        Text = @"Существует похожая заявка у этого пользователя. Проверить на дубли."
+        //    //    };
 
-            //    var queryCreateTask = await amocrm.Tasks.Add(task);
-            //}
+        //    //    var queryCreateTask = await amocrm.Tasks.Add(task);
+        //    //}
 
-            return queryCreateLead.Id.Value;
-        }
+        //    return queryCreateLead.Id.Value;
+        //}
 
     }
 

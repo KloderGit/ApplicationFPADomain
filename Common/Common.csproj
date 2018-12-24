@@ -6,12 +6,14 @@
 
   <ItemGroup>
     <PackageReference Include="Mapster" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
     <PackageReference Include="Serilog" Version="2.7.1" />
     <PackageReference Include="Serilog.Sinks.Seq" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Library1C\Library1C.csproj" />
+    <ProjectReference Include="..\..\LibraryAmoCRM\LibraryAmoCRM.csproj" />
     <ProjectReference Include="..\..\LibraryNeoClient\LibraryNeoClient.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>

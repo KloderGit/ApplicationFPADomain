@@ -7,7 +7,7 @@ using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,32 +16,30 @@ using System.Threading.Tasks;
 
 namespace WebApiBusinessLogic.Infrastructure.Actions
 {
-    public class UserAmoCRM
+    public class AmoCRMCommonActions
     {
         ILoggerService logger;
         IDataManager amoManager;
         TypeAdapterConfig mapper;
 
-        public UserAmoCRM(IDataManager amoManager, TypeAdapterConfig mapper, ILoggerService logger)
+        public AmoCRMCommonActions(IDataManager amoManager, TypeAdapterConfig mapper, ILoggerService logger)
         {
             this.logger = logger;
             this.amoManager = amoManager;
             this.mapper = mapper;
         }
 
-        public async Task<string> GetContactGuid(IEnumerable<string> phones, IEnumerable<string> emails)
+        public async Task<Contact> LookForContact(IEnumerable<string> phones, IEnumerable<string> emails, string guid)
         {
-            string guid = String.Empty;
-            
-            var findByPhones = await FindContact(ClearPhones(phones));
-            guid = findByPhones.Guid();
+            var query = await FindContactByGUID( guid );
+            if (query != null) return query;
 
-            if (!String.IsNullOrEmpty(guid)) return guid;
+            query = await FindContact(ClearPhones(phones));
+            if (query != null) return query;
 
-            var findByEmails = await FindContact(ClearEmails(emails));
-            guid = findByEmails.Guid();
+            query = await FindContact(ClearEmails(emails));
 
-            return guid;
+            return query;
 
             IEnumerable<string> ClearPhones(IEnumerable<string> values)
             {
@@ -55,6 +53,19 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
                 for (var i = 0; i < array.Count(); i++) { array[i] = array[i].ClearEmail(); }
                 return array;
             }
+        }
+
+        public async Task<Contact> LookForContact(string phone, string email, string guid)
+        {
+            var query = await FindContactByGUID( guid );
+            if (query != null) return query;
+
+            query = await FindContact( phone.LeaveJustDigits() );
+            if (query != null) return query;
+
+            query = await FindContact( email.ClearEmail() );
+
+            return query;
         }
 
         public async Task<Contact> FindContact(IEnumerable<string> queryParams)
@@ -81,6 +92,16 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
             var result = await query.Execute();
 
             return result?.FirstOrDefault().Adapt<Contact>(mapper);
+        }
+
+        public async Task<Contact> FindContactByGUID(string guid)
+        {
+            if (String.IsNullOrEmpty( guid )) return null;
+
+            var query = amoManager.Contacts.Get().Filter( p => p.Query = guid );
+            var result = await query.Execute();
+
+            return result?.FirstOrDefault().Adapt<Contact>( mapper );
         }
     }
 }

@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\WebApi\WebApi.csproj" />
     <ProjectReference Include="..\BusinessLogic\WebApiBusinessLogic.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>

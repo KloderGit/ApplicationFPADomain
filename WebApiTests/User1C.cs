@@ -27,14 +27,14 @@ namespace WebApiTests
         public void CreateUserIn1C()
         {
             var database = new UnitOfWork("Kloder", "Kaligula2");
-            var logger = new LoggerService();
+            //var logger = new LoggerService();
             TypeAdapterConfig mapper = new TypeAdapterConfig();
 
             new Domain_AmoCRM( mapper);
 
             new Domain_1C( mapper);
 
-            var action = new User1C(database, logger, mapper);
+            var action = new User1C(database, null, mapper);
 
 
             Contact contact = new Contact();
