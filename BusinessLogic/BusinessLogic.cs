@@ -26,6 +26,8 @@ namespace WebApiBusinessLogic
     public class BusinessLogic
     {
         ILoggerService logger;
+        ILoggerFactory loggerFactory;
+        ILogger currentLogger;
         TypeAdapterConfig mapper;
 
         UnitOfWork database;
@@ -41,6 +43,7 @@ namespace WebApiBusinessLogic
 
         public BusinessLogic(
             ILoggerService logger, 
+            ILoggerFactory loggerFactory,
             IConfiguration configuration, 
             TypeAdapterConfig mapping, 
             UnitOfWork service1C, 
@@ -48,6 +51,8 @@ namespace WebApiBusinessLogic
             IDataManager amocrm)
         {
             this.logger = logger;   // Логи
+            this.loggerFactory = loggerFactory;
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString());
 
             this.mapper = mapping;  // Maps
                 new RegisterCommonMaps(mapper);
@@ -58,9 +63,9 @@ namespace WebApiBusinessLogic
             neodatabase = neo;  // neo
 
             // Events
-            updGuid = new UpdateGuid(crm, database, eventsType, mapper, logger);
-            updPhone = new UpdatePhone(crm, eventsType, mapper, logger);
-            sendLead = new SendLeadTo1CEvent(crm, database, eventsType, mapper, logger);
+            updGuid = new UpdateGuid(crm, database, eventsType, mapper, loggerFactory);
+            updPhone = new UpdatePhone(crm, eventsType, mapper, loggerFactory);
+            sendLead = new SendLeadTo1CEvent(crm, database, eventsType, mapper, loggerFactory);
 
             //new RegisterMapsterConfig();
 

@@ -1,21 +1,17 @@
-﻿using Library1C;
-using LibraryAmoCRM;
+﻿using Common.Extensions.Models.Crm;
+using Common.Interfaces;
+using Domain.Models.Crm;
+using Library1C;
 using LibraryAmoCRM.Infarstructure.QueryParams;
+using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
-using Serilog;
+using Mapster;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared;
 using WebApiBusinessLogic.Models.Crm;
-using Common.Extensions.Models.Crm;
-using Mapster;
-using Microsoft.AspNetCore.Mvc;
-using Domain.Models.Crm;
-using Common.Logging;
-using System.Reflection;
-using Common.Interfaces;
-using LibraryAmoCRM.Interfaces;
-using System.Collections.Generic;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 {
@@ -25,12 +21,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         UnitOfWork database;
 
         TypeAdapterConfig mapper;
-        ILoggerService logger;
 
-        public UpdateGuid(IDataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
+        ILoggerFactory loggerFactory;
+        ILogger currentLogger;
+
+        public UpdateGuid(IDataManager amocrm, UnitOfWork database, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerFactory loggerFactory)
         {
             this.mapper = mapper;
-            this.logger = logger;
+
+            this.loggerFactory = loggerFactory;
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString());
+
             this.database = database;
             this.crm = amocrm;
 
@@ -55,7 +56,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 var hasGuid = contact.Guid();
                     if (!String.IsNullOrEmpty(hasGuid)) return;
 
-                var guid = await new LookForContact(database, logger).Find(contact);
+                var guid = await new LookForContact(database, loggerFactory).Find(contact);
 
                 if (!String.IsNullOrEmpty(guid))
                 {
@@ -65,18 +66,18 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                         contact.GetChanges().Adapt<ContactDTO>(mapper)
                     );
 
-                    logger.Information("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, contact.Id);
+                    currentLogger.LogInformation("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, contact.Id);
                 }
 
             }
             catch (NullReferenceException ex)
             {
-                logger.Debug( ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser );
+                currentLogger.LogDebug( ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser );
                 return;
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id );
+                currentLogger.LogError(ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id );
             }
         }
     }

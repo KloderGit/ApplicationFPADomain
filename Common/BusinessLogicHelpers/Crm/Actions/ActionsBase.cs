@@ -7,12 +7,12 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
 {
     public abstract class ActionsBase
     {
-        protected ILoggerService logger;
+        protected ILogger logger;
         protected IDataManager crm;
 
-        public ActionsBase(IDataManager amoManager, ILoggerService logger)
+        public ActionsBase(IDataManager amoManager, ILoggerFactory loggerFactory)
         {
-            this.logger = logger;
+            this.logger = loggerFactory.CreateLogger(this.ToString());
             this.crm = amoManager;
         }
     }

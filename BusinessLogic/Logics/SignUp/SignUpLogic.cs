@@ -19,18 +19,21 @@ namespace WebApiBusinessLogic.Logics.SignUp
 {
     public class SignUpLogic
     {
-        ILoggerService logger;
+        ILogger currentLogger;
+        ILoggerFactory loggerFactory;
+
         TypeAdapterConfig mapper;
         IDataManager crm;
 
-        public SignUpLogic(ILoggerService logger, TypeAdapterConfig mapping, IDataManager amocrm, ILogger logger2)
+        public SignUpLogic(ILoggerService logger, TypeAdapterConfig mapping, IDataManager amocrm, ILoggerFactory loggerFactory)
         {
-            this.logger = logger;   // Логи
+            // Логи
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString());
+            this.loggerFactory = loggerFactory;
+
             this.mapper = mapping;  // Maps
                 new RegisterCommonMaps( mapper );
             this.crm = amocrm; // Amo
-
-            logger2.LogWarning("OOOOOOOOOOOOOOOOOOOOOOOOOOOO");
         }
         
         public async Task<int> AddLead(SignUpDTO model)
@@ -49,13 +52,16 @@ namespace WebApiBusinessLogic.Logics.SignUp
                 var query = await crm.Leads.Add(lead.Adapt<LeadDTO>(mapper));
                 lead = query.Adapt<Lead>( mapper );
 
+                //System.Threading.Tasks.Task taskCreateLeadLog = System.Threading.Tasks.Task.Factory.StartNew(
+                //   () => logger.Information( GetType().Assembly.GetName().Name + " | Создана сделка с сайта Lead Id - {Lead}", lead.Id )
+                //);                
                 System.Threading.Tasks.Task taskCreateLeadLog = System.Threading.Tasks.Task.Factory.StartNew(
-                   () => logger.Information( GetType().Assembly.GetName().Name + " | Создана сделка с сайта Lead Id - {Lead}", lead.Id )
-                );                
+                   () => currentLogger.LogInformation("Создана сделка с сайта Lead Id - {Lead}", lead.Id)
+                );
             }
             catch(Exception ex)
             {
-                logger.Warning( ex, "Ошибка создания сделки с сайта" );
+                currentLogger.LogWarning( ex, "Ошибка создания сделки с сайта" );
                 throw new Exception();
             }
 
@@ -97,7 +103,7 @@ namespace WebApiBusinessLogic.Logics.SignUp
             }
             catch (Exception ex)
             {
-                logger.Warning(ex, "Ошибка создания примечания для сделки - " + lead.Id);
+                currentLogger.LogWarning(ex, "Ошибка создания примечания для сделки - " + lead.Id);
             }
 
 
@@ -122,7 +128,7 @@ namespace WebApiBusinessLogic.Logics.SignUp
         protected async Task<Contact> FindOrCreateContact(SignUpDTO model)
         {
             // Check available contact
-            var foundContact = await new FindContactActions(crm, logger)
+            var foundContact = await new FindContactActions(crm, loggerFactory)
                 .LookForContact(model.Contact.Phone, model.Contact.Email, null);
 
             var contact = foundContact != null ? foundContact.Adapt<Contact>(mapper) : new Contact();
@@ -145,12 +151,12 @@ namespace WebApiBusinessLogic.Logics.SignUp
                     contact = query.Adapt<Contact>(mapper);
 
                     System.Threading.Tasks.Task taskreateContactLog = System.Threading.Tasks.Task.Factory.StartNew(
-                        () => logger.Information(GetType().Assembly.GetName().Name + " | Создан контакт {Name} {Contact}", contactDTO.Name, contact.Id)
+                        () => currentLogger.LogInformation("Создан контакт {Name} {Contact}", contactDTO.Name, contact.Id)
                     );
                 }
                 catch (Exception ex)
                 {
-                    logger.Warning(ex, "Ошибка создания контакта с сайта");
+                    currentLogger.LogWarning(ex, "Ошибка создания контакта с сайта");
                     throw new Exception();
                 }
             }
@@ -169,12 +175,12 @@ namespace WebApiBusinessLogic.Logics.SignUp
                 await crm.Leads.Update(updateLead.Adapt<LeadDTO>(mapper));
 
                 System.Threading.Tasks.Task taskCreateLeadLog = System.Threading.Tasks.Task.Factory.StartNew(
-                        () => logger.Information(GetType().Assembly.GetName().Name + " | К сделке - {Lead} прикреплён клиент - {Contact}", leadId, contactId)
+                        () => currentLogger.LogInformation("К сделке - {Lead} прикреплён клиент - {Contact}", leadId, contactId)
                 );
             }
             catch (Exception ex)
             {
-                logger.Warning(ex, "Ошибка добавления пользователя в сделку");
+                currentLogger.LogWarning(ex, "Ошибка добавления пользователя в сделку");
                 throw new Exception();
             }
         }

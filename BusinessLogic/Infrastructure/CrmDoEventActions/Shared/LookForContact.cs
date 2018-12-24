@@ -4,6 +4,7 @@ using Common.Interfaces;
 using Common.Logging;
 using Domain.Models.Crm;
 using Library1C;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using ServiceReference1C;
 using System;
@@ -19,14 +20,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
     public class LookForContact
     {
         UnitOfWork database;
-        ILoggerService logger;
+        ILoggerFactory loggerFactory;
+        Microsoft.Extensions.Logging.ILogger currentLogger;
 
         string guid;
 
-        public LookForContact(UnitOfWork database, ILoggerService logger)
+        public LookForContact(UnitOfWork database, ILoggerFactory loggerFactory)
         {
             this.database = database;
-            this.logger = logger;
+
+            this.loggerFactory = loggerFactory;
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString());
         }
 
         public async Task<string> Find(Contact contact)
@@ -74,7 +78,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions.Shared
                     Metod = MethodBase.GetCurrentMethod().Name
                 };
 
-                logger.Error(ex, "Ошибка по адресу - {@Location}", info);
+                currentLogger.LogError(ex, "Ошибка по адресу - {@Location}", info);
             }
 
             return query?.GUID;

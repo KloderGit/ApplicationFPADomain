@@ -1,20 +1,16 @@
 ﻿using Common.DTO.Service1C;
 using Common.Extensions.Models.Crm;
-using Common.Interfaces;
 using Domain.Models.Crm;
 using Library1C;
-using LibraryAmoCRM;
 using LibraryAmoCRM.Configuration;
 using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using WebApiBusinessLogic.Models.Crm;
 
 namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
@@ -25,12 +21,15 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         UnitOfWork database;
 
         TypeAdapterConfig mapper;
-        ILoggerService logger;
 
-        public SendLeadTo1CEvent(IDataManager amocrm, UnitOfWork service1C, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
+        ILoggerFactory loggerFactory;
+        ILogger currentLogger;
+
+        public SendLeadTo1CEvent(IDataManager amocrm, UnitOfWork service1C, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerFactory loggerFactory)
         {
             this.mapper = mapper;
-            this.logger = logger;
+            this.loggerFactory = loggerFactory;
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString());
             this.crm = amocrm;
             this.database = service1C;
 
@@ -58,12 +57,12 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             }
             catch (NullReferenceException ex)
             {
-                logger.Warning(ex, "Сделка ID - {ID} не найдена", e.EntityId);
+                currentLogger.LogWarning(ex, "Сделка ID - {ID} не найдена", e.EntityId);
                 return;
             }
             catch (Exception ex)
             {
-                logger.Debug(ex, "Ошибка при запросе Lead - {ID}", e.EntityId);
+                currentLogger.LogDebug(ex, "Ошибка при запросе Lead - {ID}", e.EntityId);
             }
             #endregion
 
@@ -79,12 +78,12 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 }
                 catch (NullReferenceException ex)
                 {
-                    logger.Warning(ex, "Контакт ID - {ID} не найден", lead.MainContact.Id);
+                    currentLogger.LogWarning(ex, "Контакт ID - {ID} не найден", lead.MainContact.Id);
                     return;
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, "Ошибка при запросе Contact - {ID}", lead.MainContact.Id);
+                    currentLogger.LogError(ex, "Ошибка при запросе Contact - {ID}", lead.MainContact.Id);
                 }
             }
             #endregion
@@ -95,7 +94,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
             if (String.IsNullOrEmpty(contact.Guid()))
             {
-                var userActions = new Actions.User1C(database, logger, mapper);
+                var userActions = new Actions.User1C(database, loggerFactory, mapper);
 
                 string guid = String.Empty;
 
@@ -106,7 +105,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 }
                 catch (NullReferenceException ex)
                 {
-                    logger.Warning(ex, "Контакт ID - {ID} не создан в 1С", contact.Id);
+                    currentLogger.LogWarning(ex, "Контакт ID - {ID} не создан в 1С", contact.Id);
 
                     var note = new NoteDTO()
                     {
@@ -139,7 +138,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 }
                 catch (Exception ex)
                 {
-                    logger.Debug(ex, "Ошибка при сохранении пользователя в 1С");
+                    currentLogger.LogDebug(ex, "Ошибка при сохранении пользователя в 1С");
                     return;
                 }
 
@@ -195,7 +194,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                 dto.ContractSubGroup = lead.SubGroup()?.Value ?? "";
             }
 
-            var userActions3 = new Actions.User1C(database, logger, mapper);
+            var userActions3 = new Actions.User1C(database, loggerFactory, mapper);
 
             try
             {
@@ -215,7 +214,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                 var queryCreateTask = await crm.Notes.Add( note );
 
-                logger.Information( "Сделка успешно отправлена в 1С. Мероприятие - {Event} [{LeadId}] | Контакт - {Name} [{ContactId}]", lead.Name, lead.Id, contact.Name, contact.Id );
+                currentLogger.LogInformation( "Сделка успешно отправлена в 1С. Мероприятие - {Event} [{LeadId}] | Контакт - {Name} [{ContactId}]", lead.Name, lead.Id, contact.Name, contact.Id );
 
                 lead.IsInService1C(true);
 
@@ -234,11 +233,11 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                 var queryCreateTask = await crm.Notes.Add( exceptionNote );
 
-                logger.Warning( ex, "Ошибка отправки сделки в 1С" );
+                currentLogger.LogWarning( ex, "Ошибка отправки сделки в 1С" );
             }
             catch (Exception ex)
             {
-                logger.Warning(ex, "Ошибка ошибка отправки сделки в 1С" );
+                currentLogger.LogWarning(ex, "Ошибка ошибка отправки сделки в 1С" );
             }
         }
 

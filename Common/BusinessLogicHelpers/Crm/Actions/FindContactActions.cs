@@ -14,8 +14,8 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
 {
     public class FindContactActions : ActionsBase
     {
-        public FindContactActions(IDataManager amoManager, ILoggerService logger) 
-            : base (amoManager, logger)
+        public FindContactActions(IDataManager amoManager, ILoggerFactory loggerFactory) 
+            : base (amoManager, loggerFactory)
         {}
 
         public async Task<ContactDTO> LookForContact(string phone, string email, string guid)

@@ -7,28 +7,28 @@ using Domain.Models.Crm;
 using Library1C;
 using Library1C.DTO;
 using Mapster;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using ServiceReference1C;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace WebApiBusinessLogic.Infrastructure.Actions
 {
     public class User1C
     {
-        ILoggerService logger;
+        ILoggerFactory loggerFactory;
+        ILogger currentLogger;
+
         UnitOfWork database;
         TypeAdapterConfig mapper;
 
-        public User1C(UnitOfWork database, ILoggerService logger, TypeAdapterConfig mapper)
+        public User1C(UnitOfWork database, ILoggerFactory loggerFactory, TypeAdapterConfig mapper)
         {
-            this.logger = logger;
+            this.loggerFactory = loggerFactory;
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString());
             this.database = database;
             this.mapper = mapper;
         }
@@ -115,12 +115,7 @@ namespace WebApiBusinessLogic.Infrastructure.Actions
             }
             catch (Exception ex)
             {
-                var info = new MessageLocation(this)
-                {
-                    Metod = MethodBase.GetCurrentMethod().Name
-                };
-
-                logger.Error("Ошибка, {@Message}, По адресу - {@Location}", ex.Message, info);
+                currentLogger.LogError(ex,"Ошибка, {@Message}, По адресу - {@Location}");
             }
 
             return query?.GUID;

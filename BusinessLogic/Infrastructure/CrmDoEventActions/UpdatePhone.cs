@@ -7,6 +7,7 @@ using LibraryAmoCRM.Infarstructure.QueryParams;
 using LibraryAmoCRM.Interfaces;
 using LibraryAmoCRM.Models;
 using Mapster;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,15 +19,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
     public class UpdatePhone
     {
         TypeAdapterConfig mapper;
-        ILoggerService logger;
+
+        ILoggerFactory loggerFactory;
+        ILogger currentLogger;
 
         IDataManager crm;
 
-        public UpdatePhone(IDataManager crm, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerService logger)
+        public UpdatePhone(IDataManager crm, CrmEventTypes @Events, TypeAdapterConfig mapper, ILoggerFactory loggerFactory)
         {
             this.mapper = mapper;
-            this.logger = logger;
-            this.crm = crm;
+            this.loggerFactory = loggerFactory;
+            this.currentLogger = loggerFactory.CreateLogger(this.ToString()); this.crm = crm;
 
             Events.Update += DoAction;
             Events.Add += DoAction;
@@ -48,12 +51,12 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             }
             catch (NullReferenceException ex)
             {
-                logger.Debug( ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser );
+                currentLogger.LogDebug( ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser );
                 return;
             }
             catch (Exception ex)
             {
-                logger.Debug( ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@AmoUser}", e, amoUser, contact );
+                currentLogger.LogDebug( ex, "Запрос пользователя amoCRM окончился неудачей. Событие - {@Event}, {@AmoUser}", e, amoUser, contact );
                 return;
             }
 
@@ -72,12 +75,12 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
                     var dto = contact.GetChanges().Adapt<ContactDTO>( mapper );
                     await crm.Contacts.Update( dto );
 
-                    logger.Information( "Обновление Phone для пользователя Id - {User}", contact.Id );
+                    currentLogger.LogInformation( "Обновление Phone для пользователя Id - {User}", contact.Id );
                 }
             }
             catch (Exception ex)
             {
-                logger.Debug( ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id );
+                currentLogger.LogDebug( ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id );
             }
 
         }
