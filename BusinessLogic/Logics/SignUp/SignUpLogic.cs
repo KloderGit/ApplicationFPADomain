@@ -25,7 +25,7 @@ namespace WebApiBusinessLogic.Logics.SignUp
         TypeAdapterConfig mapper;
         IDataManager crm;
 
-        public SignUpLogic(ILoggerService logger, TypeAdapterConfig mapping, IDataManager amocrm, ILoggerFactory loggerFactory)
+        public SignUpLogic(TypeAdapterConfig mapping, IDataManager amocrm, ILoggerFactory loggerFactory)
         {
             // Логи
             this.currentLogger = loggerFactory.CreateLogger(this.ToString());
@@ -49,6 +49,10 @@ namespace WebApiBusinessLogic.Logics.SignUp
 
             try
             {
+                System.Threading.Tasks.Task taskPrepareLeadLog = System.Threading.Tasks.Task.Factory.StartNew(
+                   () => currentLogger.LogInformation("Подготовлена сделка для добавления - {Lead}", lead)
+                );
+
                 var query = await crm.Leads.Add(lead.Adapt<LeadDTO>(mapper));
                 lead = query.Adapt<Lead>( mapper );
 
@@ -147,6 +151,10 @@ namespace WebApiBusinessLogic.Logics.SignUp
 
                 try
                 {
+                    System.Threading.Tasks.Task taskPrepareContactLog = System.Threading.Tasks.Task.Factory.StartNew(
+                       () => currentLogger.LogInformation("Подготовлен контакт для добавления - {Contact}", contact)
+                    );
+
                     var query = await crm.Contacts.Add(contactDTO);
                     contact = query.Adapt<Contact>(mapper);
 
@@ -187,6 +195,8 @@ namespace WebApiBusinessLogic.Logics.SignUp
 
         protected Dictionary<int, string> GetInterestingEvent()
         {
+            if (crm.Account == null) return new Dictionary<int, string>();
+
             var events = crm.Account.Embedded.CustomFields.Leads.FirstOrDefault(x => x.Key == 66349).Value.Enums;
             var programs = crm.Account.Embedded.CustomFields.Leads.FirstOrDefault(x => x.Key == 227457).Value.Enums;
 

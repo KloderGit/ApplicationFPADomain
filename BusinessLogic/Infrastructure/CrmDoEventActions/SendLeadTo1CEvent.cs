@@ -43,7 +43,9 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             if (@event.Event != "status" ||
                 (@event.CurrentValue != "19368232" & @event.CurrentValue != "142" & @event.CurrentValue != "18855166" )) return;
 
-            Lead lead = null;
+            if (@event.CurrentValue == "142" & @event.Pipeline != "917056") return;
+
+                Lead lead = null;
             Contact contact = null;
 
             var contactGuid = String.Empty;
