@@ -30,7 +30,7 @@ namespace WebApiTests
             var map = new TypeAdapterConfig();
             Map_FormToModel m = new Map_FormToModel( map );
 
-            var controller = new SignUpController( null, map, null );
+            var controller = new SignUpController(map, null, null );
 
             var result = controller.GivenFromSiteForm( data );
 
@@ -41,7 +41,7 @@ namespace WebApiTests
                 new SiteFormField{ Name = "DATA[EMAIL][]", Value = "kloder3@gmail.com" }
             };
 
-            var controller2 = new SignUpController( null, map, null );
+            var controller2 = new SignUpController( map, null, null );
 
             dynamic result2 = controller.GivenFromSiteForm( data2 );
 
