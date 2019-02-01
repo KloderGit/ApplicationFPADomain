@@ -29,5 +29,17 @@ namespace Common.Extensions
 
             return str;
         }
+
+        public static string PhoneWithoutCode(this string phone)
+        {
+            phone = phone.LeaveJustDigits();
+
+            return phone.Length >= 10 ? phone.Substring(phone.Length - 10) : phone;
+        }
+
+        public static string PhoneWithoutCode(this int phone)
+        {
+            return PhoneWithoutCode(phone.ToString());
+        }
     }
 }

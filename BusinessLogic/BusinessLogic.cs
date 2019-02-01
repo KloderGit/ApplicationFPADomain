@@ -39,7 +39,12 @@ namespace WebApiBusinessLogic
         UpdatePhone updPhone;
         SendLeadTo1CEvent sendLead;
 
-        IDataManager crm;
+        protected IDataManager crm;
+
+        public BusinessLogic(IDataManager amocrm)
+        {
+            this.crm = amocrm;
+        }
 
         public BusinessLogic(
             ILoggerService logger, 
@@ -145,7 +150,7 @@ namespace WebApiBusinessLogic
             //var user = amocrm.Contacts.Get().SetParam(x => x.Phone = phone.LeaveJustDigits()).Execute().Result;
             //var user2 = amocrm.Contacts.Get().SetParam(x => x.Query = email.ClearEmail()).Execute().Result;
 
-            var userAction = new AmoCRMCommonActions(crm, mapper, logger);
+            var userAction = new AmoCRMCommonActions(crm, mapper, currentLogger);
 
             var contactGuid = userAction.FindContact(phone).Result;
 

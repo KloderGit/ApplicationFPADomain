@@ -14,11 +14,11 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
 {
     public class FindContactActions : ActionsBase
     {
-        public FindContactActions(IDataManager amoManager, ILoggerFactory loggerFactory) 
-            : base (amoManager, loggerFactory)
+        public FindContactActions(IDataManager amoManager, ILogger logger) 
+            : base (amoManager, logger)
         {}
 
-        public async Task<ContactDTO> LookForContact(string phone, string email, string guid)
+        public async Task<ContactDTO> LookForContact(string phone = "", string email = "", string guid ="")
         {
             var query = await FindContact( CutPhoneCode(phone.LeaveJustDigits()) );
             if (query != null) return query;
@@ -60,7 +60,7 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
 
         public async Task<ContactDTO> FindContact(IEnumerable<string> queryParams)
         {
-            if (queryParams == null) return null;
+            if (queryParams == null || queryParams.Count() ==0 ) return null;
 
             var query = crm.Contacts.Get();
 

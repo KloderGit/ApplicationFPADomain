@@ -10,9 +10,9 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
         protected ILogger logger;
         protected IDataManager crm;
 
-        public ActionsBase(IDataManager amoManager, ILoggerFactory loggerFactory)
+        public ActionsBase(IDataManager amoManager, ILogger logger)
         {
-            this.logger = loggerFactory.CreateLogger(this.ToString());
+            this.logger = logger;
             this.crm = amoManager;
         }
     }

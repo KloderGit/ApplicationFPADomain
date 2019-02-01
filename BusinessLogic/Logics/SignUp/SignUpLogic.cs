@@ -132,7 +132,7 @@ namespace WebApiBusinessLogic.Logics.SignUp
         protected async Task<Contact> FindOrCreateContact(SignUpDTO model)
         {
             // Check available contact
-            var foundContact = await new FindContactActions(crm, loggerFactory)
+            var foundContact = await new FindContactActions(crm, currentLogger)
                 .LookForContact(model.Contact.Phone, model.Contact.Email, null);
 
             var contact = foundContact != null ? foundContact.Adapt<Contact>(mapper) : new Contact();
@@ -140,7 +140,7 @@ namespace WebApiBusinessLogic.Logics.SignUp
             // Create contact
             if (foundContact == null)
             {
-                var buildContact = new ContactBuilder();
+                var buildContact = new Common.BusinessLogicHelpers.Crm.Builders.ContactBuilder();
                 buildContact.Name(model.Contact.Name);
                 buildContact.Phone(model.Contact.Phone);
                 buildContact.Email(model.Contact.Email);
@@ -152,14 +152,14 @@ namespace WebApiBusinessLogic.Logics.SignUp
                 try
                 {
                     System.Threading.Tasks.Task taskPrepareContactLog = System.Threading.Tasks.Task.Factory.StartNew(
-                       () => currentLogger.LogInformation("Подготовлен контакт для добавления - {Contact}", contact)
+                       () => currentLogger.LogInformation("Подготовлен контакт для добавления - {@Contact}", contact)
                     );
 
                     var query = await crm.Contacts.Add(contactDTO);
                     contact = query.Adapt<Contact>(mapper);
 
                     System.Threading.Tasks.Task taskreateContactLog = System.Threading.Tasks.Task.Factory.StartNew(
-                        () => currentLogger.LogInformation("Создан контакт {Name} {Contact}", contactDTO.Name, contact.Id)
+                        () => currentLogger.LogInformation("Создан контакт {Name} | {Id}", contactDTO.Name, contact.Id)
                     );
                 }
                 catch (Exception ex)
