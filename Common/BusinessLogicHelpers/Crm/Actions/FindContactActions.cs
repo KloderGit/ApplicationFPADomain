@@ -18,12 +18,22 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
             : base (amoManager, logger)
         {}
 
+        public async Task<ContactDTO> LookForContact(int id)
+        {
+            if (id == null || id == 0) return null;
+
+            var query = crm.Contacts.Get().Filter(p => p.Id = id);
+            var result = await query.Execute();
+
+            return result?.FirstOrDefault();
+        }
+
         public async Task<ContactDTO> LookForContact(string phone = "", string email = "", string guid ="")
         {
-            var query = await FindContact( CutPhoneCode(phone.LeaveJustDigits()) );
+            var query = await FindContact(guid);
             if (query != null) return query;
 
-            query = await FindContactByGUID(guid);
+            query = await FindContact( CutPhoneCode(phone.LeaveJustDigits()) );
             if (query != null) return query;
 
             query = await FindContact(email.ClearEmail());
@@ -33,7 +43,7 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
 
         public async Task<ContactDTO> LookForContact(IEnumerable<string> phones, IEnumerable<string> emails, string guid)
         {
-            var query = await FindContactByGUID(guid);
+            var query = await FindContact(guid);
             if (query != null) return query;
 
             query = await FindContact(ClearPhones(phones));
@@ -79,16 +89,6 @@ namespace Common.BusinessLogicHelpers.Crm.Actions
             if (String.IsNullOrEmpty(queryParam)) return null;
 
             var query = crm.Contacts.Get().Filter(p => p.Query = queryParam);
-            var result = await query.Execute();
-
-            return result?.FirstOrDefault();
-        }
-
-        public async Task<ContactDTO> FindContactByGUID(string guid)
-        {
-            if (String.IsNullOrEmpty(guid)) return null;
-
-            var query = crm.Contacts.Get().Filter(p => p.Query = guid);
             var result = await query.Execute();
 
             return result?.FirstOrDefault();

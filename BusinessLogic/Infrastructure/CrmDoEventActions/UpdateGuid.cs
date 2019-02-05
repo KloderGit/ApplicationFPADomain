@@ -1,4 +1,6 @@
-﻿using Common.Extensions.Models.Crm;
+﻿using Common.BusinessLogicHelpers.Crm.Actions;
+using Common.BusinessLogicHelpers.IcActions;
+using Common.Extensions.Models.Crm;
 using Common.Interfaces;
 using Domain.Models.Crm;
 using Library1C;
@@ -43,20 +45,39 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
         {
             if (e.Entity != "contacts" || String.IsNullOrEmpty(e.EntityId) || e.ContactType != "contact") return;
 
-            IEnumerable<ContactDTO> amoUser = null;
             Contact contact = null;
 
             try
             {
-                amoUser = await crm.Contacts.Get().Filter(prm => prm.Id = int.Parse(e.EntityId)).Execute();
-                    if (amoUser == null) throw new NullReferenceException( "Контакт [ Id -" + e.EntityId + " ] не найден в CRM" );
+                var idConvert = int.TryParse(e.EntityId, out int id);
 
-                contact = amoUser.FirstOrDefault().Adapt<Contact>(mapper);
+                if (idConvert)
+                {
+                    var action = new FindContactActions(crm, currentLogger);
 
-                var hasGuid = contact.Guid();
-                    if (!String.IsNullOrEmpty(hasGuid)) return;
+                    var result = await action.LookForContact(id);
+                    contact = result?.Adapt<Contact>(mapper);
+                }                
+            }
+            catch (Exception ex)
+            {
+                currentLogger.LogError(ex, "Ошибка при поиске контакта в Crm");
+                return;
+            }
 
-                var guid = await new LookForContact(database, loggerFactory).Find(contact);
+            if (contact == null)
+            {
+                currentLogger.LogWarning("Контакт [ Id -" + e.EntityId + " ] не найден в CRM");
+                return;
+            }
+                
+
+            var hasGuid = contact.Guid();
+            if (!String.IsNullOrEmpty(hasGuid)) return;
+
+            try
+            {
+                var guid = await new FindGuidAction(database, loggerFactory).Find(contact);
 
                 if (!String.IsNullOrEmpty(guid))
                 {
@@ -68,17 +89,17 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
 
                     currentLogger.LogInformation("Обновление Guid - {Guid}, для пользователя Id - {User}", guid, contact.Id);
                 }
-
             }
             catch (NullReferenceException ex)
             {
-                currentLogger.LogDebug( ex, "Ошибка, нулевое значение {@Contacts}", contact, amoUser );
+                currentLogger.LogDebug(ex, "Ошибка, нулевое значение {@Contacts}", contact);
                 return;
             }
             catch (Exception ex)
             {
-                currentLogger.LogError(ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id );
+                currentLogger.LogError(ex, "Ошибка обновления пользователя. [{@Id}]", contact.Id);
             }
+
         }
     }
 }

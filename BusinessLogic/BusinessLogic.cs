@@ -51,8 +51,9 @@ namespace WebApiBusinessLogic
             ILoggerFactory loggerFactory,
             IConfiguration configuration, 
             TypeAdapterConfig mapping, 
-            UnitOfWork service1C, 
-            ServiceLibraryNeoClient.Implements.DataManager neo, 
+            UnitOfWork service1C,
+            //ServiceLibraryNeoClient.Implements.DataManager neo, 
+            Lazy<ServiceLibraryNeoClient.Implements.DataManager> neo,
             IDataManager amocrm)
         {
             this.logger = logger;   // Логи
@@ -65,7 +66,7 @@ namespace WebApiBusinessLogic
             this.crm = amocrm; // Amo
             this.database = service1C;  // 1C
 
-            neodatabase = neo;  // neo
+            neodatabase = neo.Value;  // neo
 
             // Events
             updGuid = new UpdateGuid(crm, database, eventsType, mapper, loggerFactory);

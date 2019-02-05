@@ -32,7 +32,7 @@ namespace WebApiBusinessLogic.Infrastructure.CrmDoEventActions
             this.currentLogger = loggerFactory.CreateLogger(this.ToString()); this.crm = crm;
 
             Events.Update += DoAction;
-            Events.Add += DoAction;
+            //Events.Add += DoAction;
         }
 
         public async void DoAction(object sender, CrmEvent e)
