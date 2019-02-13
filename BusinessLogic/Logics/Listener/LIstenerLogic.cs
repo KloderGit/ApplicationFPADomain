@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using WebApiBusinessLogic.Logics.Listener.DTO;
 
 namespace WebApiBusinessLogic.Logics.Listener
 {
-    public class LIstenerLogic
+    public class ListenerLogic
     {
-        public void EventsHandle(IEnumerable<CrmEventDTO> crmEvents)
+        CrmEventHandler events = new CrmEventHandler();
+
+        public ListenerLogic()
         {
-            foreach (var @event in crmEvents)
-            {
-                Console.WriteLine(@event.Event);
-            }
+
         }
+
+        public void EventsHandle(IEnumerable<EventDTO> crmEvents)
+        {
+
+            
+        }
+
     }
 }
